@@ -75,10 +75,14 @@ untersucht werden.
 Weitere Unterstützung wird bei Bedarf gegeben. Alle Untersuchungen sind schriftlich zu dokumentieren.
 Neben der schriftlichen Arbeit sind alle Quellen (Programmcode, Texte, Testsignale)
 und Tools abzugeben, damit eine Reproduktion der Ergebnisse möglich ist.
+
 Teilaufgaben:
-• Koordination
-• Recherche
-• Programmierung
-• Dokumentation (Grundlagen, Methode, Änderungen am Quellcode, Kompressionsergebnisse)
-Max. 5 Personen,
-Max. 2.5 Zusatzpunkte für Klausur
+
+* Koordination
+
+* Recherche
+
+* Programmierung
+
+* Dokumentation (Grundlagen, Methode, Änderungen am Quellcode, Kompressionsergebnisse)
+
