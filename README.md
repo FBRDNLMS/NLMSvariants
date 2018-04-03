@@ -77,12 +77,8 @@ Neben der schriftlichen Arbeit sind alle Quellen (Programmcode, Texte, Testsigna
 und Tools abzugeben, damit eine Reproduktion der Ergebnisse möglich ist.
 
 Teilaufgaben:
-
 * Koordination
-
 * Recherche
-
 * Programmierung
-
 * Dokumentation (Grundlagen, Methode, Änderungen am Quellcode, Kompressionsergebnisse)
 
