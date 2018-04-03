@@ -1,4 +1,4 @@
-## Aufgabenstellung
+# Aufgabenstellung
 
 Aus der PDF entnommen mit der Auswahl an PVL-Themen
 
@@ -89,3 +89,41 @@ Teilaufgaben:
 * Programmierung
 * Dokumentation (Grundlagen, Methode, Änderungen am Quellcode, Kompressionsergebnisse)
 
+
+## E-Mail Ergänzung zur Aufgabenstellung:
+
+Sehr geehrte Studierende,
+
+danke für die Wahl des Themas.
+
+Zur Themenstellung möchte ich Folgendes ergänzen:
+Die drei Varianten sind jeweils in einer Schleife über alle 
+verfügbaren Signalwerte abzuarbeiten, wobei typischer Weise mit 
+Filterkoeffizienten a_j = 0 angefangen wird.
+Abweichend davon ist es evtl. sinnvoll, a_1=1 zusetzen.
+
+Testsignale können Sie sich selbst generieren, wobei wir uns 
+hierüber noch abstimmen sollten.
+Man könnte verschiedene Zeilen aus verschiedenen Bildern nehmen, 
+Sprachsignale aufzeichnen oder Signale synthetisch generieren:
+
+z.B.
+x[0] = x[1] = x[2] =..= x[M] = 100;
+for n = M+1: N-1
+   x[n] = a_1 * x[n-1] + a_2 * x[n-2] + ..+ a_M *x[n-M] + 
+randn(1,1)*5;
+end     
+
+Die Koeffizienten des LMS-Filters müssten dann gegen die bei der 
+Synthese verwendeten Koeffizienten konvergieren
+Achtung: bei Matlab beginnt das Indizieren mit 1 (statt 0).
+
+Bitte fangen Sie zeitnah an.
+Falls es Unklarheiten zum Ablauf oder der Verfahrensweise gibt, 
+bitte per Email bei mir melden.
+Da es gewisse Freiheitsgrade in der Bearbeitung gibt, wäre es sehr 
+sinnvoll, wenn Sie mir regelmäßig über den Stand der PVL berichten 
+und wir uns ggf. austauschen können.
+
+Mit freundlichen Grüßen
+T.Strutz
