@@ -128,3 +128,8 @@ und wir uns ggf. austauschen können.
 
 Mit freundlichen Grüßen
 T.Strutz
+
+
+
+**<span class="math">$$\sin^2(x) + \cos^2(x) = 1$$</span>**
+
