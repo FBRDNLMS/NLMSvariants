@@ -18,7 +18,7 @@ Xˉ [𝑛] = �𝑎𝑗[𝑛] ∙ 𝑥[𝑛 − 𝑗]
 Der Prädiktionsfehler lautet: e[𝑛] = 𝑥[𝑛] − 𝑥'[𝑛]. Um die Prädiktionsfehlerenergie zu minimieren
 müssen die Filterkoeffizienten nachgeführt (aktualisiert) werden
 
-%%𝑎𝑗[𝑛 + 1] = 𝑎𝑗[𝑛] + 𝜇 * 𝑒[𝑛] * 𝑥[𝑛−𝑗]%%
+𝑎𝑗[𝑛 + 1] = 𝑎𝑗[𝑛] + 𝜇 * 𝑒[𝑛] * 𝑥[𝑛−𝑗]
  
 ||𝐱[𝑛]||
 2 mit ||𝐱[𝑛]||
@@ -128,8 +128,3 @@ und wir uns ggf. austauschen können.
 
 Mit freundlichen Grüßen
 T.Strutz
-
-
-
-**<span class="math">$$\sin^2(x) + \cos^2(x) = 1$$</span>**
-
