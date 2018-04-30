@@ -2,8 +2,8 @@
 //  main.c
 //  NLMS
 //
-//  Created by Stefan Fiese on 26.04.18.
-//  Copyright © 2018 Stefan Fiese. All rights reserved.
+//  Created by FBRDNLMS on 26.04.18.
+//  Copyright © 2018 FBRDNLMS. All rights reserved.
 //
 
 #include <stdio.h>
@@ -13,7 +13,7 @@
 #include <string.h>
 
 #define M 1000
-#define tracking 40; //Count of weights
+#define tracking 40 //Count of weights
 //static Stack<double> x = new Stack<double>();
 //static Random rnd = new Random();
 //static double[] _x = new double[M];
@@ -24,181 +24,220 @@ double x[] ={0};
 double _x[M] = {0};
 double w [M][M]={{0},{0}};
 
-char filename(void);
+
+void fileName(char *name_suffix);
+double r2(void);
+double rnd(void);
 double sum_array(double x[], int length);
 void direkterVorgaenger(void);
 void lokalerMittelWert(void);
 
-double r2()
-{
-    return((rand() % 10000) / 10000.0);
-}
-
-int rnd()
-{
-    double u;
-    u = r2();
-    return u;
-}
 
 
 
 
 int main(int argc, char **argv ) {
 
+    //init test_array, fill in weights by random
     int i = 0;
     for (i = 0; i < M; i++) {
         _x[i] += ((255.0 / M) * i);
         for (int k = 1; k < M; k++)
         {
             w[k][i] = rnd();
-            //Console.WriteLine(String.Format("Weight: {0}", w[k, i]));
         }
-        
     }
-    
+
+    // save plain test_array before math magic happened
+    char weightsBefore  [] = "_weights.txt";
+    fileName(&weightsBefore);
+    FILE *fp0 = fopen(weightsBefore,"wb+");
+
     for (i = 0; i < tracking; i++){
-        for (int k = 1; k < tracking; k++)
-        {
-            const char *name = fileName();
-            FILE *fp = fopen(*name,"wb+");
-            File.AppendAllText("weights.txt",
-                               String.Format("[{0}][{1}] {2}\n", k, i, Math.Round(w[k, i], 2).ToString()),
-                               Encoding.UTF8);
-        }
+      for ( int k = 1; k < tracking; k++ ){
+        fprintf(fp0, "[%f][%f] %.2f\n", k, i, w[k][i]);
+      }
     }
-    
+    fclose(fp0);
+
+
+    // math magic
     direkterVorgaenger();
-    
+   
+
+    // save test_array after math magic happened
+    char weightsAfter [] = "_weights_after.txt";
+    fileName(&weightsAfter);
+    FILE *fp1 = fopen(weightsAfter,"wb+");
+
     for (i = 0; i < tracking; i++) {
         for (int k = 1; k < tracking; k++) {
-            File.AppendAllText("weights_after.txt",
-                               String.Format("[{0}][{1}] {2}\n", k, i, Math.Round(w[k, i], 2).ToString()),
-                               Encoding.UTF8);
-        }
+            fprintf(fp1, "[%f][%f] %.2f\n", k,i, w[k][i]);
+	}
         
     }
-    
+    fclose(fp1);
     
     getchar();
     
 }
 
-void lokalerMittelWert()
-{
-    int i;
-    for (i=1; i < M; i++){
-   // while (x.Count + 1 < M)
-        double x_pred = 0.0;
-        double x_middle = (i > 0) ? sum_array(x,i) / i : 0;
-        double x_actual = _x[i];
-        
-        for (int j = 1; j < i; j++)
-        {
-            x_pred += (w[j, i] * (x[i - j] - x_middle));
-        }
-        x_pred += x_middle;
-        
-        //Console.WriteLine(String.Format("X_sum: {0}", x_middle));
-        
-       printf("X_pred: {%f}", x_pred);
-       printf("X_actual: {%f}", x_actual);
-        
-        double x_error = x_actual - x_pred;
-        double x_square = 0;
-        
-        for (int k = 1; k <= i; k++)
-        {
-            x_square += pow(x[i - k], 2);
-        }
-        
-        for (int l = 1; l < i; l++)
-        {
-            w[l, i + 1] = w[l, i] + learnrate * x_error * (x[i - l] / x_square);
-        }
-    }
-}
 
-static void direkterVorgaenger()
-{
-    double x_error[M] = {0};
+/*
+ 
+ ===================================
+ 
+ lokalerMittelwert()
+ 
+ 
+ Variant (1/3), 
+ substract local mean
+
+ ===================================
+*/ 
+
+void lokalerMittelWert() {
+
+    double xError[M]; // includes e(n)
+    memset(xError, 0, M);// initialize xError-array with Zero
+    int xCount = 0; // runtime var	
     int i;
-    for(i = 0; i < M; i++)
-    //while (x.Count + 1 < M)
-    {
-        double x_pred = 0.0;
-        //double[] x_array = _x;
-        double x_actual = _x[i + 1];
-        if (x.Count > 0)
-        {
-            for (int j = 1; j < i; j++)
-            {
-                x_pred += (w[j, i] * (_x[i - j] - _x[i - j - 1]));
-            }
-            x_pred += x[i - 1];
-            
-            //Console.WriteLine(String.Format("X_sum: {0}", x_middle));
-            
-            //Console.WriteLine(String.Format("X_pred: {0}", x_pred));
-            File.AppendAllText("direkterVorgaenger.txt",
-                               String.Format("{0}. X_pred {1}\n",x.Count, x_pred),
-                               Encoding.UTF8);
-            //Console.WriteLine(String.Format("X_actual: {0}", x_actual));
-            File.AppendAllText("direkterVorgaenger.txt",
-                               String.Format("{0}. X_actual {1}\n", x.Count, x_actual),
-                               Encoding.UTF8);
-            
-            x_error[x.Count] = x_actual - x_pred;
-            
-            //Console.WriteLine(String.Format("X_error: {0}", x_error));
-            File.AppendAllText("direkterVorgaenger.txt",
-                               String.Format("{0}. X_error {1}\n\n", x.Count, x_error),
-                               Encoding.UTF8);
-            double x_square = 0;
-            
-            for (int k = 1; k < i; k++)
-            {
-                x_square += pow(_x[i - k] - _x[i - k - 1], 2);
-            }
-            //Console.WriteLine(String.Format("X_square: {0}", x_square));
-            //File.AppendAllText("direkterVorgaenger.txt",
-            //    String.Format("{0}. X_square {1}\n", x.Count, x_square),
-            //    Encoding.UTF8);
-            //File.AppendAllText("x_array.txt",
-            //    String.Format("{0}. X_array {1}\n", x.Count, x_array[x.Count - 1]),
-            //    Encoding.UTF8);
-            for (int l = 1; l < i; l++)
-            {
-                w[l, i + 1] = w[l, i] + learnrate * x_error[i] * ((_x[i - l] - x_array[i - l - 1]) / x_square);
-            }
+	
+
+    for (xCount = 1; xCount < M; xCount++){ // x_cout can not be zero 
+        
+	//double xPartArray[xCount]; //includes all values at the size of runtime var
+
+	double xMean = (xCount > 0) ? ( sum_array(_x, xCount) / xCount) : 0;
+        
+	double xPredicted = 0.0;
+	double xActual = _x[xCount + 1];
+
+	for ( i = 1; i < xCount; i++ ){ //get predicted value
+	  xPredicted += (w[i][xCount] * (_x[xCount - i] - xMean)) ;
+	}
+	
+	xPredicted += xMean;
+	xError [xCount] = xActual - xPredicted;
+
+	double xSquared = 0.0;
+
+	for ( i = 1; i < xCount; i++ ){ //get x squared
+          xSquared =+ pow(_x[xCount-i],2);
         }
+	
+	for ( i - 1; i < xCount; i++ ){ //update weights
+	  w[i][xCount+1] = w[i][xCount] + learnrate * xError[xCount] * (_x[xCount - i] / xSquared);
+	}
     }
-    int x_error_array_length = sizeof(error_array_length)/sizeof(error_array_length[0])
-    double mittel = sum_array(x_error, x_error_array_length) / x_error_array_length;
-    double varianz = 0.0;
-    for (i = 0; i <= x_error_array_length; i++)
-    //foreach(double x_e in x_error)
-    {
-        varianz += pow(x_e - mittel, 2);
+    
+    int xErrorLength = sizeof(xError) / sizeof(xError[0]);
+    double mean = sum_array(xError, xErrorLength) / M;
+    double deviation = 0.0;
+   
+    // Mean square
+    for( i = 0; i < M-1; i++ ){
+      deviation += pow( xError[i], 2 );
     }
-    varianz /= x_error_array_length;
-    File.AppendAllText("ergebnisse.txt",
-                       String.Format("Quadratische Varianz(x_error): {0}\n Mittelwert(x_error): {1}\n\n", varianz, mittel),
-                       Encoding.UTF8);
+    deviation /= xErrorLength;
+
+   
+    // write in file
+    char results [] = "_results.txt";
+    fileName(&results);
+    FILE *fp2 = fopen(results, "wb+"); 
+    fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
+    fclose(fp2);
+
 }
 
 
-char fileName(char *fname){
+/*
+ 
+ ===================================
+ 
+ direkterVorgaenger() 
+ 
+ 
+ Variant (2/3), 
+ substract direct predecessor
+
+ ===================================
+*/ 
+
+void direkterVorgaenger() {
+   
+    double xError [M];
+    int xCount = 0, i;
+
+    // File handling
+    char direkterVorgaenger [] = "_direkterVorgaenger.txt";
+    fileName(&direkterVorgaenger);
+    FILE *fp3 = fopen(direkterVorgaenger, "wb+");	
+
+    for ( xCount = 1; xCount < M; xCount++ ){
+      double xPredicted = 0.0;
+      double xActual = _x[xCount+1];
+      
+      for ( i = 1; i < xCount; i++ ){
+        xPredicted += ( w[i][xCount] * ( _x[xCount - i] - _x[xCount - i - 1]));
+      }
+
+      xPredicted += _x[xCount-1]; 
+      xError[xCount] = xActual - xPredicted;
+
+      fprintf(fp3, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
+
+
+      //get x squared
+      double xSquared = 0;
+      for ( i = 1; i < xCount; i++ ){
+	xSquared += pow( _x[xCount - i] - _x[xCount - i - 1], 2); // substract direct predecessor
+      }	
+
+      for ( i = 1; x < xCount; i++){
+        w[i][xCount+1] = w[i][xCount] + learnrate * xError[xCount] * ( ( _x[xCount - i - 1] ) / xSquared );
+      }
+    }
+    int xErrorLength = sizeof(xError) / sizeof(xError[0]);  
+    double mean = sum_array(xError, xErrorLength) / xErrorLength;
+    double deviation = 0.0;
+
+    for ( i = 0; i < xErrorLength -1; i++ ){
+      deviation += pow( xError[i] - mean, 2);
+    }
+
+    
+    fprintf(fp3, "{%d}.\tLeast Mean Squared{%f}\tMean{%f}\n\n", xCount, deviation, mean);
+    fclose(fp3);
+}
+
+
+/*
+ 
+ ===================================
+ 
+ fileName()
+ 
+ 
+ generates filename with date for
+ logging purposes
+
+ ===================================
+*/ 
+
+void fileName(char *name_suffix){
     //filename
     char date[34];
     //char name[13] = "_results.txt";
     time_t now;
     now = time(NULL);
     strftime(date, 20, "%Y-%m-%d_%H_%M_%S", localtime(&now));
-    strcpy(date,*fname);
+    strcpy(date, *name_suffix);
     //return &date[0];
-    return date;
+    return;
 }
+
 
 /*
  
@@ -210,16 +249,56 @@ char fileName(char *fname){
  sum of all elements in x
  within a defined length
  
- ====================================
+ ===================================
  
  */
 
 double sum_array(double x[], int length){
     //int length = 0;
+    int i = 0;
     double sum = 0.0;
     //length = sizeof(x)/sizeof(x[0]);
     for (i=0; i< length; i++){
         sum += x[i];
     }
     return sum;
+}
+
+
+/*
+
+ ===================================
+
+
+ r2()
+
+ returns a double value between
+ 0 and 1
+
+ ===================================
+
+*/
+double r2()
+{
+    return((rand() % 10000) / 10000.0);
+}
+
+/*
+
+ ===================================
+
+
+ int rnd()
+
+ fills a double variable with
+ random value and returns it
+
+ ===================================
+
+*/
+double rnd()
+{
+    double u;
+    u = r2();
+    return u;
 }
