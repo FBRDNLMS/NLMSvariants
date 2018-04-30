@@ -14,18 +14,17 @@
 
 #define M 1000
 #define tracking 40 //Count of weights
-//static Stack<double> x = new Stack<double>();
-//static Random rnd = new Random();
-//static double[] _x = new double[M];
-//static double[,] w = new double[M, M];
 #define learnrate 1.0
+#define WGHTS 1
+#define WGHTSFTR 2
+#define RES 3
+#define DRCTPRD 4
 
 double x[] ={0};
 double _x[M] = {0};
 double w [M][M]={{0},{0}};
 
-
-void fileName(char *name_suffix);
+const char *fileName(int id);
 double r2(void);
 double rnd(void);
 double sum_array(double x[], int length);
@@ -33,13 +32,11 @@ void direkterVorgaenger(void);
 void lokalerMittelWert(void);
 
 
-
-
-
 int main(int argc, char **argv ) {
 
     //init test_array, fill in weights by random
-    int i = 0;
+    int i;
+   // srand(NULL);
     for (i = 0; i < M; i++) {
         _x[i] += ((255.0 / M) * i);
         for (int k = 1; k < M; k++)
@@ -49,10 +46,7 @@ int main(int argc, char **argv ) {
     }
 
     // save plain test_array before math magic happened
-    char weightsBefore  [] = "_weights.txt";
-    fileName(&weightsBefore);
-    FILE *fp0 = fopen(weightsBefore,"wb+");
-
+    FILE *fp0 = fopen(fileName(WGHTS),"wb+");
     for (i = 0; i < tracking; i++){
       for ( int k = 1; k < tracking; k++ ){
         fprintf(fp0, "[%f][%f] %.2f\n", k, i, w[k][i]);
@@ -66,10 +60,7 @@ int main(int argc, char **argv ) {
    
 
     // save test_array after math magic happened
-    char weightsAfter [] = "_weights_after.txt";
-    fileName(&weightsAfter);
-    FILE *fp1 = fopen(weightsAfter,"wb+");
-
+    FILE *fp1 = fopen(fileName(WGHTSFTR),"wb+");
     for (i = 0; i < tracking; i++) {
         for (int k = 1; k < tracking; k++) {
             fprintf(fp1, "[%f][%f] %.2f\n", k,i, w[k][i]);
@@ -143,9 +134,7 @@ void lokalerMittelWert() {
 
    
     // write in file
-    char results [] = "_results.txt";
-    fileName(&results);
-    FILE *fp2 = fopen(results, "wb+"); 
+    FILE *fp2 = fopen(fileName(RES), "wb+"); 
     fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
     fclose(fp2);
 
@@ -171,9 +160,7 @@ void direkterVorgaenger() {
     int xCount = 0, i;
 
     // File handling
-    char direkterVorgaenger [] = "_direkterVorgaenger.txt";
-    fileName(&direkterVorgaenger);
-    FILE *fp3 = fopen(direkterVorgaenger, "wb+");	
+    FILE *fp3 = fopen(fileName(DRCTPRD), "wb+");	
 
     for ( xCount = 1; xCount < M; xCount++ ){
       double xPredicted = 0.0;
@@ -195,7 +182,7 @@ void direkterVorgaenger() {
 	xSquared += pow( _x[xCount - i] - _x[xCount - i - 1], 2); // substract direct predecessor
       }	
 
-      for ( i = 1; x < xCount; i++){
+      for ( i = 1; i < xCount; i++){
         w[i][xCount+1] = w[i][xCount] + learnrate * xError[xCount] * ( ( _x[xCount - i - 1] ) / xSquared );
       }
     }
@@ -226,16 +213,15 @@ void direkterVorgaenger() {
  ===================================
 */ 
 
-void fileName(char *name_suffix){
-    //filename
-    char date[34];
-    //char name[13] = "_results.txt";
+const char *fileName(int id){
+    
+    static char* suffix[] = {"_weights.txt","_weights_after.txt", "_results.txt", "direct_predecessor.txt"};
+    char *date;
     time_t now;
     now = time(NULL);
     strftime(date, 20, "%Y-%m-%d_%H_%M_%S", localtime(&now));
-    strcpy(date, *name_suffix);
-    //return &date[0];
-    return;
+    strcat(suffix[id], date);
+    return suffix[id];
 }
 
 
@@ -298,7 +284,6 @@ double r2()
 */
 double rnd()
 {
-    double u;
-    u = r2();
-    return u;
+    double rndmval= r2();
+    return rndmval;
 }
