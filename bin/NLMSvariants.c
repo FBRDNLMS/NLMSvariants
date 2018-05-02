@@ -1,6 +1,6 @@
 //
-//  main.c
-//  NLMS
+//  
+//  NLMSvariants.c
 //
 //  Created by FBRDNLMS on 26.04.18.
 //  Copyright © 2018 FBRDNLMS. All rights reserved.
@@ -255,7 +255,6 @@ double sum_array(double x[], int length){
 
  ===================================
 
-
  r2()
 
  returns a double value between
@@ -272,7 +271,6 @@ double r2()
 /*
 
  ===================================
-
 
  int rnd()
 
