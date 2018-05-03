@@ -20,6 +20,7 @@
 #define USED_WEIGHTS 1
 #define RESULTS 2
 #define DIRECT_PREDECESSOR 3
+#define GRAPH 4
 
 double x[] = {0};
 double _x[M] = {0};
@@ -30,11 +31,11 @@ char * mkFileName( char* buffer, size_t max_len, int suffixId );
 char *fileSuffix( int id );
 void myLogger( FILE* fp, int myVar); 
 
-/* *rand seed functions* */
+/* *rand seed* */
 double r2( void );
 double rndm( void );
 
-/* *math functions * */
+/* *math* */
 double sum_array( double x[], int length );
 void directPredecessor( void );
 void localMean( void );
@@ -65,8 +66,8 @@ int main(int argc, char **argv ) {
 
 
     // math magic
-   //directPredecessor(); // TODO: needs some love!
-    localMean();
+    directPredecessor(); // TODO: needs some love!
+    //localMean();
    
 
     // save test_array after math magic happened
@@ -186,6 +187,7 @@ void directPredecessor( void ) {
       xError[xCount] = xActual - xPredicted;
 
       fprintf(fp3, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
+      
 
       double xSquared = 0.0;
       //get x squared
@@ -250,10 +252,26 @@ char *mkFileName( char* buffer, size_t max_len, int suffixId) {
 */
 
 char * fileSuffix( int id ) {
-	char * suffix[] = {"_weights_pure.txt", "_weights_used.txt", "direct_predecessor.txt", "ergebnisse.txt"};
+	char * suffix[] = {"_weights_pure.txt", "_weights_used.txt", "direct_predecessor.txt", "ergebnisse.txt", "_graph.svg"};
 	return suffix[id];
 }
 
+
+/*
+ ==========================================================================
+
+ svgGraph	
+
+ 	
+ ==========================================================================
+*/
+/*
+void Graph ( ) {
+	char fileName[50];
+	mkFileName(fileName, sizeof(fileName), GRAPH);
+	FILE* fp4 = fopen(fileName, "w");
+	pfrintf
+*/	
 
 
 /*
@@ -268,7 +286,9 @@ char * fileSuffix( int id ) {
  */
 
 void myLogger ( FILE* fp, int myVar ){
+	
 	fprintf( fp, "Logging: %d\n", myVar);
+	
 }
 
 
@@ -318,10 +338,51 @@ double r2( void ) {
 
  fills a double variable with random value and returns it
 
- =========================================================================
+ ==========================================================================
 */
 
 double rndm( void ) {
     double rndmval= r2();
     return rndmval;
 }
+
+
+
+/*
+ ==========================================================================
+
+ parser
+
+ Parses files, used for template.svg mainly
+
+ ==========================================================================
+*/
+
+char * parser( char buffer) {
+	    FILE *fp = fopen ( "template.svg", "wr" );
+    char *line = NULL;
+    char *ptr;
+    size_t len = 0;
+    ssize_t read;
+    char string[] = "HECK!!!";    
+
+    if( fp == NULL ) {
+        exit(EXIT_FAILURE);
+    }
+   
+    while ( ( read = getline(&line, &len, fp) ) != -1) {
+       // printf("Retrieved line of length %zu :\n", read);
+       //puts(line);
+   	if( strstr(line, "<path d=\"M0 0 ") != NULL ) { 	    
+		ptr = line;
+		printf("%s", *ptr);
+		
+		fprintf(fp, "%s\n", string); 
+
+	}	
+    }
+
+   free(line);
+    exit(EXIT_SUCCESS);
+}
+
