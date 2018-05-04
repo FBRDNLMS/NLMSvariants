@@ -13,7 +13,7 @@
 #include <string.h>
 #include <float.h> // DBL_MAX
 
-#define M 100
+#define M 1000
 #define tracking 40 //Count of weights
 #define learnrate 1.0
 #define PURE_WEIGHTS 0
@@ -39,7 +39,9 @@ point_t points[M]; // [0]=xActual, [1]=xPredicted from directPredecessor, [2]=xP
 char * mkFileName( char* buffer, size_t max_len, int suffixId );
 char *fileSuffix( int id );
 void myLogger( FILE* fp, point_t points[]); 
-size_t getline( char **lineptr, size_t *n, FILE *stream ); //redundant under POSIX supporting OS
+#ifdef _WIN32 
+size_t getline( char **lineptr, size_t *n, FILE *stream );
+#endif
 void mkSvgGraph( point_t points[]);
 
 /* *rand seed* */
@@ -307,15 +309,15 @@ void Graph ( ) {
 
 void myLogger ( FILE* fp, point_t points[] ){
 	int i;
-	for( i = 0; i <= M; i++ ){
+	for( i = 0; i <= M; i++ ){ // xActual
 		fprintf( fp, "L %f %f\n", points[i].xVal[0], points[i].yVal[0]);
 	}
-	fprintf(fp, "\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.8px\"/>\n<path d=\"M0 0\n");
-	for( i = 0; i <  M-1; i++ ) {
+	fprintf(fp, "\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
+	for( i = 0; i <  M-1; i++ ) { // xPred from directPredecessor
 		fprintf( fp, "L %f %f\n", points[i].xVal[1], points[i].yVal[1]);
 	}	
-	fprintf(fp, "\" fill=\"none\" stroke=\"green\" stroke-width=\"0.8px\"/>\n<path d=\"M0 0\n");
-	for( i = 0; i <= M; i++ ) {
+	fprintf(fp, "\" fill=\"none\" stroke=\"green\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
+	for( i = 0; i <= M; i++ ) { //xPred from lastMean
 		fprintf(fp, "L %f %f\n", points[i].xVal[2], points[i].yVal[2]);
 	}
 }	
@@ -388,7 +390,7 @@ double rndm( void ) {
 
  =========================================================================
 */
-
+#ifdef _WIN32 
 size_t getline(char **lineptr, size_t *n, FILE *stream) {
     char *bufptr = NULL;
     char *p = bufptr;
@@ -440,7 +442,7 @@ size_t getline(char **lineptr, size_t *n, FILE *stream) {
 
     return p - bufptr - 1;
 }
-
+#endif
 
 
 /*

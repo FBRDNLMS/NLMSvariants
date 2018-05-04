@@ -22,7 +22,7 @@
     </g>
     <g transform="translate(200, 400) scale(1,-1)">
         <path d="M0 0  
-	" fill="none" stroke="red" stroke-width="0.8px"/>	
+	" fill="none" stroke="red" stroke-width="0.4px"/>	
         <text class="t36 t-mid bold f-black" x="50" y="50">+ +</text>
         <text class="t36 t-mid bold f-black" x="-50" y="50">- +</text>
         <text class="t36 t-mid bold f-black" x="50" y="-50">+ -</text>
