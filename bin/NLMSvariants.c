@@ -21,19 +21,33 @@
 #define RESULTS 3
 #define DIRECT_PREDECESSOR 2
 #define LOCAL_MEAN 4
-
+#define RGB_COLOR 255
 double x[] = {0};
 double _x[M] = {0};
 double w [M][M]={{0},{0}};
 
 
-/* graph building */
+/* *svg graph building* */
 typedef struct {	
 	double xVal[7];
 	double yVal[7];
 }point_t;
 
 point_t points[M]; // [0]=xActual, [1]=xPredicted from directPredecessor, [2]=xPredicted from localMean
+
+/* *ppm reader/writer* */
+typedef struct {
+	unsigned char red, green, blue;
+}colorChannel_t;
+
+typedef struct {
+	int x,y;
+	colorChannel_t *data;
+}imagePixel_t;
+
+static imagePixel_t * readPPM( char *fileName );
+void mkPpmFile( char *fileNamem, imagePixel_t *image );
+int * ppmColorChannel( imagePixel_t *image );
 
 /* *file handling* */
 char * mkFileName( char* buffer, size_t max_len, int suffixId );
@@ -385,8 +399,7 @@ double rndm( void ) {
  getline
 
  This code is public domain -- Will Hartung 4/9/09
- Microsoft Windows is not POSIX conform and does not support getline. 
- What the Heck? 
+ Microsoft Windows is not POSIX conform and does not support getline.  
 
  =========================================================================
 */
@@ -486,4 +499,119 @@ void mkSvgGraph( point_t points[] ) {
   // free(input);
    //exit(EXIT_SUCCESS);
 }
+
+/*
+ ===========================================================================
+ 
+ rdPPM
+
+ reads data from file of type PPM, stores colorchannels in a struct in the
+ size of given picture
+
+ ==========================================================================
+ */
+
+static imagePixel_t *rdPPM ( const char *fileName ) {
+	char buffer [16];
+	imagePixel_t *image;
+ 	int c, rgbColor;
+	
+	FILE *fp = fopen ( fileName, "rb" );
+	if ( !fp ) {
+		exit (EXIT_FAILURE);
+	}
+	if ( !fgets (buffer, sizeof(buffer), fp) ) {
+		perror(fileName);
+		exit(EXIT_FAILURE);
+	}
+	if ( buffer[0] != 'P' || buffer[1] != '6' ) {
+		fprintf(stderr,"No PPM file format\n");
+		exit(EXIT_FAILURE);
+	}
+	image = (imagePixel_t *) malloc (sizeof(imagePixel_t));
+	if (!image ) {
+		fprintf(stderr, "malloc() failed");
+	}
+	c = getc(fp);
+	while ( c == '#' ) {
+		while ( getc(fp) != '\n' );
+		c = getc(fp);
+	}
+	ungetc(c, fp);
+	if ( fscanf(fp, "%d %d", &image->x, &image->y) !=2 ) {
+		fprintf(stderr, "Invalid image size in %s\n", fileName);
+		exit(EXIT_FAILURE);
+	}
+	if ( fscanf(fp, "%d", &rgbColor) != 1 ) {
+		fprintf(stderr, "Invalid rgb component in %s\n", fileName);
+	}
+	if ( rgbColor != RGB_COLOR ) {
+		fprintf(stderr, "Invalid image color range in %s\n", fileName );
+		exit(EXIT_FAILURE);
+	}
+	while ( fgetc(fp) != '\n' );
+	image->data = (imagePixel_t *) malloc(image->x * image->y * sizeof(imagePixel_t));
+	if ( !image ) {
+		fprintf(stderr, "malloc() failed" );
+		exit(EXIT_FAILURE);
+	}
+	if ( fread(image->data, 3 * image->x, image->y, fp) != image->y ) {
+		fprintf(stderr, "Loading image failed");
+		exit(EXIT_FAILURE);
+	}
+	fclose(fp);
+	return image;
+}
+
+
+
+/*
+ =======================================================================================
+
+ mkPpmFile
+
+ gets output from the result of rdPpmFile and writes a new mkPpmFile. Best Case is a
+ carbon copy of the source image
+
+ =======================================================================================
+*/
+
+void mkPpmFile ( char *fileName, imagePixel_t *image ) {
+	FILE* fp = fopen(fileName, "wb" );
+		if ( !fp ) {
+			fprintf(stderr, "Opening file failed." );
+			exit(EXIT_FAILURE);
+		}
+		fprintf(fp, "P6\n");
+		fprintf(fp, "%d %d\n", image->x, image->y);
+		fprintf(fp, "%d\n", RGB_COLOR);
+		fwrite(image->data, 3* image->x, image->y, fp);
+		fclose(fp);
+}
+
+/*
+ ======================================================================================
+
+ ppmColorChannel
+
+ gets one of the rgb color channels and returns the array
+
+ ======================================================================================
+ */
+
+int * ppmColorChannel( imagePixel_t *image ) {
+	int length = (image->x * image->y)/3, i;
+	int buffer[length];
+	
+	printf("%d\n", length);
+	if ( image ){
+		for ( i = 0; i < length; i++ ) {
+			buffer[i] = image->data[i].green;
+			//output[i] = image->data[i].blue;
+			//output[i] = image->data[i].red;
+		}
+	}
+	return buffer;
+}
+
 
