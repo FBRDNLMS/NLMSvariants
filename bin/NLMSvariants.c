@@ -24,24 +24,12 @@
 #define RGB_COLOR 255
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
-#include <codecvt>          // std::codecvt_utf8_utf16
-#include <locale>           // std::wstring_convert
-#include <string>           // std::wstring
 typedef SSIZE_T ssize_t;
 #endif
+
 double x[] = { 0 };
 double _x[M] = { 0 };
 double w[M][M] = { { 0 },{ 0 } };
-
-#if defined(_MSC_VER)
-/* UTF-8 to UTF-16 win Format*/
-auto wstring_from_utf8(char const* const utf8_string)
--> std::wstring
-{
-	std::wstring_convert< std::codecvt_utf8_utf16< wchar_t > > converter;
-	return converter.from_bytes(utf8_string);
-}
-#endif
 
 /* *svg graph building* */
 typedef struct {
@@ -51,7 +39,7 @@ typedef struct {
 
 point_t points[M]; // [0]=xActual, [1]=xPredicted from directPredecessor, [2]=xPredicted from localMean
 
-				   /* *ppm reader/writer* */
+/* *ppm reader/writer* */
 typedef struct {
 	unsigned char red, green, blue;
 }colorChannel_t;
@@ -69,9 +57,6 @@ int * ppmColorChannel(imagePixel_t *image);
 char * mkFileName(char* buffer, size_t max_len, int suffixId);
 char *fileSuffix(int id);
 void myLogger(FILE* fp, point_t points[]);
-#ifdef _WIN32 
-size_t getline(char **lineptr, size_t *n, FILE *stream);
-#endif
 void mkSvgGraph(point_t points[]);
 
 /* *rand seed* */
@@ -313,23 +298,6 @@ char * fileSuffix(int id) {
 /*
 ==========================================================================
 
-svgGraph
-
-
-==========================================================================
-*/
-/*
-void Graph ( ) {
-char fileName[50];
-mkFileName(fileName, sizeof(fileName), GRAPH);
-FILE* fp4 = fopen(fileName, "w");
-pfrintf
-*/
-
-
-/*
-==========================================================================
-
 myLogger
 
 
@@ -432,73 +400,6 @@ double rndm(void) {
 /*
 ==========================================================================
 
-getline
-
-This code is public domain -- Will Hartung 4/9/09 //edited by Kevin Becker
-Microsoft Windows is not POSIX conform and does not support getline.
-
-=========================================================================
-*/
-#ifdef _WIN32 
-size_t getline(char **lineptr, size_t *n, FILE *stream) {
-	char *bufptr = NULL;
-	char *p = bufptr;
-	size_t size;
-	int c;
-
-	if (lineptr == NULL) {
-		return -1;
-	}
-	if (stream == NULL) {
-		return -1;
-	}
-	if (n == NULL) {
-		return -1;
-	}
-	bufptr = *lineptr;
-	size = *n;
-
-	c = fgetc(stream);
-	if (c == EOF) {
-		return -1;
-	}
-	if (bufptr == NULL) {
-		char c[128];
-		memset(c, 0, sizeof(c));
-		bufptr = c;
-		if (bufptr == NULL) {
-			return -1;
-		}
-		size = 128;
-	}
-	p = bufptr;
-	while (c != EOF) {
-		if ((p - bufptr) > (size - 1)) {
-			size = size + 128;
-			realloc(bufptr, size);
-			if (bufptr == NULL) {
-				return -1;
-			}
-		}
-		*p++ = c;
-		if (c == '\n') {
-			break;
-		}
-		c = fgetc(stream);
-	}
-
-	*p++ = '\0';
-	*lineptr = bufptr;
-	*n = size;
-
-	return p - bufptr - 1;
-}
-#endif
-
-
-/*
-==========================================================================
-
 mkSvgGraph
 
 parses template.svg and writes results in said template
@@ -523,41 +424,20 @@ void mkSvgGraph(point_t points[]) {
 	char buffer[131072] = "";
 	
 	memset(buffer, '\0', sizeof(buffer));
-	//int length = 0;
 	while(!feof(input)) {
 		fgets(line, 512, input);
 		strncat(buffer, line,strlen(line));
-		printf("%s\n", line);
+	//	printf("%s\n", line);
 		if (strstr(line, firstGraph) != NULL) {
 			bufferLogger(buffer, points);
 		}
 
 	}
 	fprintf(target, buffer);
-	//int c = 0;
-	puts(buffer);
-	//getchar();
-	
-	//if (strstr(line, firstGraph) != NULL) {
-	//	//fprintf(target,"HECK!!!\n");
-	//	bufferLogger(strstr(line, firstGraph),sizeof(firstGraph), points);
-	//}
-
-	/*while ((read = getline(&line, &len, input)) != -1) {
-		//printf("Retrieved line of length %zu :\n", read);
-		//puts(line); // debug purpose 
-		fprintf(target, "%s", line);
-		if (strstr(line, firstGraph) != NULL) {
-			fprintf(target,"HECK!!!\n");
-			myLogger(target, points);
-		}
-	}*/
-
-	/*free(line);
-	free(target);
-	free(input);*/
-	//exit(EXIT_SUCCESS);
+	//puts(buffer);
 }
+
+
 
 /*
 ===========================================================================
