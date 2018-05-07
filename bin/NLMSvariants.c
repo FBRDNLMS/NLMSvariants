@@ -21,6 +21,7 @@
 #define RESULTS 3
 #define DIRECT_PREDECESSOR 2
 #define LOCAL_MEAN 4
+#define TEST_VALUES 5
 #define RGB_COLOR 255
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -49,9 +50,10 @@ typedef struct {
 	colorChannel_t *data;
 }imagePixel_t;
 
-static imagePixel_t * rdPPM(char *fileName);
-void mkPpmFile(char *fileName, imagePixel_t *image);
-void * ppmColorChannel(imagePixel_t *image);
+static imagePixel_t * rdPPM(char *fileName); // read PPM file format
+void mkPpmFile(char *fileName, imagePixel_t *image); // writes PPM file
+int ppmColorChannel(FILE* fp, imagePixel_t *image); // writes colorChannel from PPM file to log file
+void ppmTo_X( FILE* fp ); // stores color channel values in _x[]
 
 /* *file handling* */
 char * mkFileName(char* buffer, size_t max_len, int suffixId);
@@ -72,23 +74,24 @@ void localMean(void);
 
 int main(int argc, char **argv) {
 	char fileName[50];
-	int i;
-//	char *colorChannel;	
+	int i, xLength;
+	int *colorChannel;	
 	imagePixel_t *image;
 	
-	image = rdPPM("cow.ppm");
-	ppmColorChannel(image);
-	//printf("%s", colorChannel);
-//	for ( i = 0; i < 30; i++ ) {
-//		printf("%d", *(colorChannel+i));
-//	}
-	
 
+	image = rdPPM("beaches.ppm");
+	mkFileName(fileName, sizeof(fileName), TEST_VALUES);
+	FILE* fp5 = fopen(fileName, "w");
+	xLength = ppmColorChannel(fp5, image);
+	printf("%d\n", xLength);	
+	
+	FILE* fp6 = fopen(fileName, "r");
+	ppmTo_X ( fp6 );
 
 	srand((unsigned int)time(NULL));
 
 	for (i = 0; i < M; i++) {
-		_x[i] += ((255.0 / M) * i); // Init test values
+//		_x[i] += ((255.0 / M) * i); // Init test values
 		for (int k = 0; k < M; k++) {
 			w[k][i] = rndm(); // Init weights
 		}
@@ -109,8 +112,8 @@ int main(int argc, char **argv) {
 	localMean();
 	directPredecessor(); // TODO: used_weights.txt has gone missing! 
 
-						 // save test_array after math magic happened
-						 // memset( fileName, '\0', sizeof(fileName) );
+	 // save test_array after math magic happened
+	 // memset( fileName, '\0', sizeof(fileName) );
 	mkFileName(fileName, sizeof(fileName), USED_WEIGHTS);
 	FILE *fp1 = fopen(fileName, "w");
 	for (i = 0; i < tracking; i++) {
@@ -301,7 +304,7 @@ Contains and returns every suffix for all existing filenames
 */
 
 char * fileSuffix(int id) {
-	char * suffix[] = { "_weights_pure.txt", "_weights_used.txt", "_direct_predecessor.txt", "_ergebnisse.txt", "_localMean.txt" };
+	char * suffix[] = { "_weights_pure.txt", "_weights_used.txt", "_direct_predecessor.txt", "_ergebnisse.txt", "_localMean.txt","_testvalues.txt" };
 	return suffix[id];
 }
 
@@ -545,17 +548,32 @@ gets one of the rgb color channels and returns the array
 ======================================================================================
 */
 
-void * ppmColorChannel(imagePixel_t *image) {
-	int length = (image->x * image->y) / 3;
-	int i = 0;
- 
-//	realloc(result, length);	
+int ppmColorChannel(FILE* fp, imagePixel_t *image) {
+	int length = 1000; // (image->x * image->y) / 3;
+	int i = 0; 
 	
-	printf("%d\n", length);
 	if (image) {
-		for ( i = 0; i < length; i++ ){ 
-		fprintf(stdout,"%d\n", image->data[i].green);
+		for ( i = 0; i <= length; i++ ){ 
+		fprintf(fp,"%d\n", image->data[i].green);
 		}
 	}	
-//	memcpy(colorChannel, 
+	fclose(fp);
+	return length;	
+}
+
+void ppmTo_X( FILE* fp ) {
+	int i = 0;
+	int d, out;
+	double f;
+	int length = 1000;	
+	char  buffer[length];
+
+	while ( !feof(fp) ) {
+		if ( fgets(buffer, length, fp) != NULL ) {	
+		sscanf(buffer,"%lf", &_x[i]);
+		printf("%lf\n", _x[i] );
+		++i;
+		}
+	}	
+	fclose(fp);
 }
