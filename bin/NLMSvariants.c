@@ -49,9 +49,9 @@ typedef struct {
 	colorChannel_t *data;
 }imagePixel_t;
 
-static imagePixel_t * readPPM(char *fileName);
-void mkPpmFile(char *fileNamem, imagePixel_t *image);
-int * ppmColorChannel(imagePixel_t *image);
+static imagePixel_t * rdPPM(char *fileName);
+void mkPpmFile(char *fileName, imagePixel_t *image);
+void * ppmColorChannel(imagePixel_t *image);
 
 /* *file handling* */
 char * mkFileName(char* buffer, size_t max_len, int suffixId);
@@ -73,6 +73,17 @@ void localMean(void);
 int main(int argc, char **argv) {
 	char fileName[50];
 	int i;
+//	char *colorChannel;	
+	imagePixel_t *image;
+	
+	image = rdPPM("cow.ppm");
+	ppmColorChannel(image);
+	//printf("%s", colorChannel);
+//	for ( i = 0; i < 30; i++ ) {
+//		printf("%d", *(colorChannel+i));
+//	}
+	
+
 
 	srand((unsigned int)time(NULL));
 
@@ -411,10 +422,6 @@ void mkSvgGraph(point_t points[]) {
 	FILE *input = fopen("template.svg", "r");
 	FILE *target = fopen("output.svg", "w");
 	char line[512];
-	// char *ptr;
-	//size_t len = 0;
-	//ssize_t read;
-	//char values[64];
 	char firstGraph[15] = { "<path d=\"M0 0" };  
 
 	if (input == NULL) {
@@ -450,7 +457,7 @@ size of given picture
 ==========================================================================
 */
 
-static imagePixel_t *rdPPM(const char *fileName) {
+static imagePixel_t *rdPPM(char *fileName) {
 	char buffer[16];
 	imagePixel_t *image;
 	int c, rgbColor;
@@ -538,19 +545,17 @@ gets one of the rgb color channels and returns the array
 ======================================================================================
 */
 
-int * ppmColorChannel(imagePixel_t *image) {
+void * ppmColorChannel(imagePixel_t *image) {
 	int length = (image->x * image->y) / 3;
 	int i = 0;
-	int buffer[10];
-	realloc(buffer,length);
-
+ 
+//	realloc(result, length);	
+	
 	printf("%d\n", length);
 	if (image) {
-		for (i = 0; i < length; i++) {
-			buffer[i] = image->data[i].green;
-			//output[i] = image->data[i].blue;
-			//output[i] = image->data[i].red;
+		for ( i = 0; i < length; i++ ){ 
+		fprintf(stdout,"%d\n", image->data[i].green);
 		}
-	}
-	return buffer;
+	}	
+//	memcpy(colorChannel, 
 }
