@@ -161,7 +161,7 @@ void direkterVorgaenger()
 		// Funktion fürs berechnen der Vorhersagezahl
 		for (int i = 1; i < x_count; i++)
 		{
-			x_pred += (w[i, x_count] * (_x[x_count - i] - _x[x_count - i - 1]));
+			x_pred += (w[i, x_count] * (_x[x_count - 1] - _x[x_count - i - 1]));
 		}
 		x_pred += _x[x_count - 1];
 
@@ -194,7 +194,7 @@ void direkterVorgaenger()
 		double x_square = 0;
 		for (int i = 1; i < x_count; i++)
 		{
-			x_square += Math.Pow(_x[x_count - i] - _x[x_count - i - 1], 2);
+			x_square += Math.Pow(_x[x_count - 1] - _x[x_count - i - 1], 2);
 		}
 		
 		//Console.WriteLine(String.Format("X_square: {0}", x_square));
@@ -207,7 +207,7 @@ void direkterVorgaenger()
 		// Funktion zum updaten der Gewichte
 		for (int i = 1; i < x_count; i++)
 		{
-			w[i, x_count + 1] = w[i, x_count] + learnrate * x_error[x_count] * ((_x[x_count - i] - _x[x_count - i - 1]) / x_square);
+			w[i, x_count + 1] = w[i, x_count] + learnrate * x_error[x_count] * ((_x[x_count - 1] - _x[x_count - i - 1]) / x_square);
 		}
 		
 		// Laufzeitvariable hochzählen
@@ -229,4 +229,98 @@ void direkterVorgaenger()
 	File.AppendAllText("ergebnisse.txt",
 			String.Format("Quadratische Varianz(x_error): {0}\n Mittelwert(x_error): {1}\n\n", varianz, mittel),
 			Encoding.UTF8);
+}
+
+/**************************************************************
+Errechnet die 3. Variante, mit abziehen des differenziellen Vorgängers
+***************************************************************/
+
+void differenziellerVorgaenger()
+{
+    //Array in dem e(n) gespeichert wird
+    double[] x_error = new double[M];
+
+    //Laufzeitvariable
+    int x_count = 0;
+
+    // x_count + 1 da x_count > 0 sein muss
+    while (x_count + 1 < M)
+    {
+        // Variable für die errechnete Zahl
+        double x_pred = 0.0;
+
+        // Variable mit der eigentlichen Zahl
+        double x_actual = _x[x_count + 1];
+
+        // Funktion fürs berechnen der Vorhersagezahl
+        for (int i = 1; i < x_count; i++)
+        {
+            x_pred += (w[i, x_count] * (_x[x_count - i] - _x[x_count - i - 1]));
+        }
+        x_pred += _x[x_count - 1];
+
+        //Console.WriteLine(String.Format("X_pred: {0}", x_pred));
+
+        // Hängt dem Angegebenen File den Vorgegebenen String an
+        File.AppendAllText("differenziellerVorgaenger.txt",
+           String.Format("{0}. X_pred {1}\n", x_count, x_pred),
+           Encoding.UTF8);
+
+        //Console.WriteLine(String.Format("X_actual: {0}", x_actual));
+
+        // Hängt dem Angegebenen File den Vorgegebenen String an
+        File.AppendAllText("differenziellerVorgaenger.txt",
+            String.Format("{0}. X_actual {1}\n", x_count, x_actual),
+            Encoding.UTF8);
+
+        // Berechnung des Fehlers
+        x_error[x_count] = x_actual - x_pred;
+
+
+        //Console.WriteLine(String.Format("X_error: {0}", x_error));
+
+        // Hängt dem Angegebenen File den Vorgegebenen String an
+        File.AppendAllText("differenziellerVorgaenger.txt",
+        String.Format("{0}. X_error {1}\n\n", x_count, x_error),
+        Encoding.UTF8);
+
+        // Funktion zum berechnen des Quadrates
+        double x_square = 0;
+        for (int i = 1; i < x_count; i++)
+        {
+            x_square += Math.Pow(_x[x_count - i] - _x[x_count - i - 1], 2);
+        }
+
+        //Console.WriteLine(String.Format("X_square: {0}", x_square));
+
+        // Hängt dem Angegebenen File den Vorgegebenen String an
+        //File.AppendAllText("direkterVorgaenger.txt",
+        //    String.Format("{0}. X_square {1}\n", x_count, x_square),
+        //    Encoding.UTF8);
+
+        // Funktion zum updaten der Gewichte
+        for (int i = 1; i < x_count; i++)
+        {
+            w[i, x_count + 1] = w[i, x_count] + learnrate * x_error[x_count] * ((_x[x_count - i] - _x[x_count - i - 1]) / x_square);
+        }
+
+        // Laufzeitvariable hochzählen
+        x_count += 1;
+    }
+
+    // Berechenen des mittleren Fehlers
+    double mittel = x_error.Sum() / x_error.Length;
+
+    // Berechenen der varianz des Fehlers
+    double varianz = 0.0;
+    foreach (double x_e in x_error)
+    {
+        varianz += Math.Pow(x_e - mittel, 2);
+    }
+    varianz /= x_error.Length;
+
+    // Hängt dem Angegebenen File den Vorgegebenen String an
+    File.AppendAllText("ergebnisse.txt",
+            String.Format("Quadratische Varianz(x_error): {0}\n Mittelwert(x_error): {1}\n\n", varianz, mittel),
+            Encoding.UTF8);
 }
