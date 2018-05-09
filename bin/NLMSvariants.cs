@@ -9,10 +9,10 @@ const int tracking = 40;
 static Random rnd = new Random();
 
 // Array mit den Testwerten
-static double[] _x = new double[M];
+static double[] _x = new double[NumberOfSamples];
 
 // Array mit den Gewichten
-static double[,] w = new double[M, M];
+static double[,] w = new double[NumberOfSamples, NumberOfSamples];
 
 // Lernrate
 static double learnrate = 1;
@@ -27,10 +27,10 @@ main() des Programms
 int main(){
 
 	// Initialisierung des Test Array + Gewichte
-	 for (int i = 0; i < M; i++)
+	 for (int i = 0; i < NumberOfSamples; i++)
 	{
-		_x[i] += ((255.0 / M) * i);
-		for (int k = 1; k < M; k++)
+		_x[i] += ((255.0 / NumberOfSamples) * i);
+		for (int k = 0; k < windowSize; k++)
 		{
 			w[k, i] = rnd.NextDouble();
 			//Console.WriteLine(String.Format("Weight: {0}", w[k, i]));
@@ -41,7 +41,7 @@ int main(){
 	// Zum erstellen eines Files mit den Gewichten vor den Updates
 	for (int i = 0; i < tracking; i++)
 	{
-		for (int k = 1; k < tracking; k++)
+		for (int k = 0; k < windowSize; k++)
 		{
 			File.AppendAllText("weights.txt",
 				String.Format("[{0}][{1}] {2}\n", k, i, Math.Round(w[k, i], 2).ToString()),
@@ -55,7 +55,7 @@ int main(){
 	// Zum erstellen eines Files mit den Gewichten nach den Updates
 	for (int i = 0; i < tracking; i++)
 	{
-		for (int k = 1; k < tracking; k++)
+		for (int k = 0; k < windowSize; k++)
 		{
 			File.AppendAllText("weights_after.txt",
 				String.Format("[{0}][{1}] {2}\n", k, i, Math.Round(w[k, i], 2).ToString()),
@@ -74,18 +74,20 @@ Errechnet die 1. Variante, mit abziehen des lokalen Mittelwertes
 void lokalerMittelWert()
 {
 	//Array in dem e(n) gespeichert wird
-	double[] x_error = new double[M];
+	double[] x_error = new double[NumberOfSamples];
 	
 	//Laufzeitvariable
 	int x_count = 0;
 	
 	// x_count + 1 da x_count > 0 sein muss
-	while (x_count + 1 < M)
+	while (x_count + 1 < NumberOfSamples)
 	{
 		//Erstellt ein neues Array der letzten "windowSize" Werte 
 		double[] x_part_Array = new double[x_count];
+
         //Anfang des Fensters das erstellt wird
         int _sourceIndex = (x_count > windowSize) ? x_count - windowSize : 0;
+
         //Länge des Fensters das erstellt wird
         int _arrayLength = (x_count > windowSize) ? windowSize : (x_count > 0) ? x_count - 1 : 0;
 
@@ -153,13 +155,13 @@ Errechnet die 2. Variante, mit abziehen des direkten Vorgängers
 void direkterVorgaenger()
 {
 	//Array in dem e(n) gespeichert wird
-	double[] x_error = new double[M];
+	double[] x_error = new double[NumberOfSamples];
 	
 	//Laufzeitvariable
 	int x_count = 0;
 	
 	// x_count + 1 da x_count > 0 sein muss
-	while (x_count + 1 < M)
+	while (x_count + 1 < NumberOfSamples)
 	{
 		// Variable für die errechnete Zahl
 		double x_pred = 0.0;
@@ -254,13 +256,13 @@ Errechnet die 3. Variante, mit abziehen des differenziellen Vorgängers
 void differenziellerVorgaenger()
 {
     //Array in dem e(n) gespeichert wird
-    double[] x_error = new double[M];
+    double[] x_error = new double[NumberOfSamples];
 
     //Laufzeitvariable
     int x_count = 0;
 
     // x_count + 1 da x_count > 0 sein muss
-    while (x_count + 1 < M)
+    while (x_count + 1 < NumberOfSamples)
     {
         // Variable für die errechnete Zahl
         double x_pred = 0.0;
