@@ -419,22 +419,22 @@ void bufferLogger(char *buffer, point_t points[]) {
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[0], points[i].yVal[0]);
 		strcat(buffer, _buffer);
 	}
-	strcat(buffer, "\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
+	strcat(buffer, "\" fill=\"none\" id=\"svg_1\" stroke=\"black\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
 	for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++) { // xPrediceted from localMean
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[1], points[i].yVal[1]);
 		strcat(buffer, _buffer);
 	}
-	strcat(buffer, "\" fill=\"none\" stroke=\"green\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
+	strcat(buffer, "\" fill=\"none\" id=\"svg_2\" stroke=\"green\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
 	for (i = 0; i <= NUMBER_OF_SAMPLES - 1; i++) { //xPreddicted from directPredecessor
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[2], points[i].yVal[2]);
 		strcat(buffer, _buffer);
 	}
-	strcat(buffer, "\" fill=\"none\" stroke=\"blue\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
+	strcat(buffer, "\" fill=\"none\" id=\"svg_3\" stroke=\"blue\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
 	for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++ ){ //xPredicted from diff Pred
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[3], points[i].xVal[3]);
 		strcat(buffer, _buffer);
 	}
-
+    strcat(buffer, "\" fill=\"none\" id=\"svg_4\" stroke=\"blue\" stroke-width=\"0.4px\"/>\n");
 }
 
 
