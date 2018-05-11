@@ -42,7 +42,7 @@ typedef struct {
 
 point_t points[NUMBER_OF_SAMPLES]; // [0] = xActual, [1]=xpredicted from localMean, [2]=xpredicted from directPredecessor, [3] = xpredicted from differentialpredecessor, [4] = xError from localMean, [5] xError from directPredecessor, [6] xError from differentialPredecessor
 
-/* *ppm read, copy, write* */
+								   /* *ppm read, copy, write* */
 typedef struct {
 	unsigned char red, green, blue;
 }colorChannel_t;
@@ -55,9 +55,9 @@ typedef struct {
 static imagePixel_t * rdPPM(char *fileName); // read PPM file format
 void mkPpmFile(char *fileName, imagePixel_t *image); // writes PPM file
 int ppmColorChannel(FILE* fp, imagePixel_t *image); // writes colorChannel from PPM file to log file
-void colorSamples( FILE* fp ); // stores color channel values in xSamples[]
+void colorSamples(FILE* fp); // stores color channel values in xSamples[]
 
-/* *file handling* */
+							 /* *file handling* */
 char * mkFileName(char* buffer, size_t max_len, int suffixId);
 char *fileSuffix(int id);
 void myLogger(FILE* fp, point_t points[]);
@@ -71,9 +71,9 @@ double rndm(void);
 double sum_array(double x[], int length);
 void directPredecessor(void);
 void localMean(void);
-void differentialPredecessor( void );
+void differentialPredecessor(void);
 double *popNAN(double *xError, int xErrorLength); //return new array without NAN values
-double windowXMean( int _arraylength, int xCount );
+double windowXMean(int _arraylength, int xCount);
 
 
 int main(int argc, char **argv) {
@@ -90,14 +90,14 @@ int main(int argc, char **argv) {
 	printf("%d\n", xLength);
 
 	FILE* fp6 = fopen(fileName, "r");
-	colorSamples ( fp6 );
+	colorSamples(fp6);
 
 	srand((unsigned int)time(NULL));
 
 	for (i = 0; i < NUMBER_OF_SAMPLES; i++) {
-//		_x[i] += ((255.0 / M) * i); // Init test values
+		//		_x[i] += ((255.0 / M) * i); // Init test values
 		for (int k = 0; k < WINDOWSIZE; k++) {
-			w[k][i]= rndm(); // Init weights
+			w[k][i] = rndm(); // Init weights
 		}
 	}
 
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 	// save plain test_array before math magic happens
 	FILE *fp0 = fopen(fileName, "w");
 	for (i = 0; i <= tracking; i++) {
-		for ( k = 0; k < WINDOWSIZE; k++) {
+		for (k = 0; k < WINDOWSIZE; k++) {
 			fprintf(fp0, "[%d][%d] %lf\n", k, i, w[k][i]);
 		}
 	}
@@ -116,8 +116,8 @@ int main(int argc, char **argv) {
 	localMean();
 	//directPredecessor();
 	//differentialPredecessor();
-	 // save test_array after math magic happened
-	 // memset( fileName, '\0', sizeof(fileName) );
+	// save test_array after math magic happened
+	// memset( fileName, '\0', sizeof(fileName) );
 	mkFileName(fileName, sizeof(fileName), USED_WEIGHTS);
 	FILE *fp1 = fopen(fileName, "w");
 	for (i = 0; i < tracking; i++) {
@@ -135,13 +135,13 @@ int main(int argc, char **argv) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    localMean
+localMean
 
-    Variant (1/3), substract local mean.
+Variant (1/3), substract local mean.
 
- ======================================================================================================
+======================================================================================================
 */
 
 void localMean(void) {
@@ -153,49 +153,49 @@ void localMean(void) {
 	FILE* fp4 = fopen(fileName, "w");
 	fprintf(fp4, "\n=====================================LocalMean=====================================\n");
 
-    double xMean = xSamples[0];
+	double xMean = xSamples[0];
 	double weightedSum = 0.0;
 	double filterOutput = 0.0;
-    double xSquared = 0.0;
-    double xPredicted = 0.0;
-    double xActual = 0.0;
+	double xSquared = 0.0;
+	double xPredicted = 0.0;
+	double xActual = 0.0;
 
 
 	for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
-        double xPartArray[xCount]; //includes all values at the size of runtime var
-		//int _sourceIndex = (xCount > WINDOWSIZE) ? xCount - WINDOWSIZE : xCount;
+		//double xPartArray[1000]; //includes all values at the size of runtime var
+								   //int _sourceIndex = (xCount > WINDOWSIZE) ? xCount - WINDOWSIZE : xCount;
 		int _arrayLength = (xCount > WINDOWSIZE) ? WINDOWSIZE + 1 : xCount;
 		//printf("xCount:%d, length:%d\n", xCount, _arrayLength);
-        xMean = ( xCount > 0 ) ? windowXMean(_arrayLength, xCount) : 0;
-        // printf("WINDOWSIZE:%f\n", windowXMean(_arrayLength, xCount));
+		xMean = (xCount > 0) ? windowXMean(_arrayLength, xCount) : 0;
+		// printf("WINDOWSIZE:%f\n", windowXMean(_arrayLength, xCount));
 		xPredicted = 0.0;
 		xActual = xSamples[xCount + 1];
-	//	weightedSum += _x[ xCount-1 ] * w[xCount][0];
+		//	weightedSum += _x[ xCount-1 ] * w[xCount][0];
 
-		for (i = 1; i < _arrayLength ; i++) { //get predicted value
-		 	xPredicted += (w[i][xCount] * ( xSamples[xCount - i] - xMean));
+		for (i = 1; i < _arrayLength; i++) { //get predicted value
+			xPredicted += (w[i][xCount] * (xSamples[xCount - i] - xMean));
 
 		}
 		xPredicted += xMean;
 		xError[xCount] = xActual - xPredicted;
-		printf("Pred: %f\t\tActual:%f\n", xPredicted,xActual);
+		printf("Pred: %f\t\tActual:%f\n", xPredicted, xActual);
 		points[xCount].xVal[1] = xCount;
 		points[xCount].yVal[1] = xPredicted;
 		points[xCount].xVal[4] = xCount;
 		points[xCount].yVal[4] = xError[xCount];
 
-        xSquared = 0.0;
+		xSquared = 0.0;
 		for (i = 1; i < _arrayLength; i++) { //get xSquared
-			//xSquared += pow(xSamples[xCount - i], 2);
+											 //xSquared += pow(xSamples[xCount - i], 2);
 			xSquared += pow(xSamples[xCount - i] - xMean, 2);
 			printf("xSquared:%f\n", xSquared);
 		}
-		if(xSquared == 0.0){ // returns Pred: -1.#IND00
-            xSquared = 1.0;
+		if (xSquared == 0.0) { // returns Pred: -1.#IND00
+			xSquared = 1.0;
 		}
-        //printf("%f\n", xSquared);
+		//printf("%f\n", xSquared);
 		for (i = 1; i < _arrayLength; i++) { //update weights
-			w[i][xCount + 1] = w[i][xCount] + learnrate * xError[xCount] * ( (xSamples[xCount - i] - xMean) / xSquared);
+			w[i][xCount + 1] = w[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xMean) / xSquared);
 		}
 
 		fprintf(fp4, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
@@ -225,14 +225,14 @@ void localMean(void) {
 }
 
 /*
-  ======================================================================================================
+======================================================================================================
 
-    directPredecessor
+directPredecessor
 
-    Variant (2/3),
-    substract direct predecessor
+Variant (2/3),
+substract direct predecessor
 
-  ======================================================================================================
+======================================================================================================
 */
 
 void directPredecessor(void) {
@@ -240,19 +240,19 @@ void directPredecessor(void) {
 	double xError[2048];
 	int xCount = 0, i;
 	double xActual;
-    int xPredicted = 0.0;
+	int xPredicted = 0.0;
 	// File handling
 	mkFileName(fileName, sizeof(fileName), DIRECT_PREDECESSOR);
 	FILE *fp3 = fopen(fileName, "w");
 	fprintf(fp3, "\n=====================================DirectPredecessor=====================================\n");
 
 	for (xCount = 1; xCount < NUMBER_OF_SAMPLES + 1; xCount++) {
-        double xPartArray[xCount]; //includes all values at the size of runtime var
-		//int _sourceIndex = (xCount > WINDOWSIZE) ? xCount - WINDOWSIZE : xCount;
+		//double xPartArray[xCount]; //includes all values at the size of runtime var
+								   //int _sourceIndex = (xCount > WINDOWSIZE) ? xCount - WINDOWSIZE : xCount;
 		int _arrayLength = (xCount > WINDOWSIZE) ? WINDOWSIZE + 1 : xCount;
 		printf("xCount:%d, length:%d\n", xCount, _arrayLength);
-        double xMean = ( xCount > 0 ) ? windowXMean(_arrayLength, xCount) : 0;
-        printf("%f\n", windowXMean(_arrayLength, xCount));
+		double xMean = (xCount > 0) ? windowXMean(_arrayLength, xCount) : 0;
+		printf("%f\n", windowXMean(_arrayLength, xCount));
 		xPredicted = 0.0;
 		xActual = xSamples[xCount + 1];
 
@@ -279,7 +279,7 @@ void directPredecessor(void) {
 	}
 
 	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
-    printf("vor:%d", xErrorLength);
+	printf("vor:%d", xErrorLength);
 	popNAN(xError, xErrorLength);
 	printf("nach:%d", xErrorLength);
 	xErrorLength = sizeof(xError) / sizeof(xError[0]);
@@ -298,16 +298,16 @@ void directPredecessor(void) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    differentialPredecessor
+differentialPredecessor
 
-    variant (3/3),
-    differenital predecessor.
+variant (3/3),
+differenital predecessor.
 
- ======================================================================================================
- */
-void differentialPredecessor ( void ) {
+======================================================================================================
+*/
+void differentialPredecessor(void) {
 
 	char fileName[512];
 	double xError[2048];
@@ -361,15 +361,15 @@ void differentialPredecessor ( void ) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    mkFileName
+mkFileName
 
-    Writes the current date plus the suffix with index suffixId
-    into the given buffer. If the total length is longer than max_len,
-    only max_len characters will be written.
+Writes the current date plus the suffix with index suffixId
+into the given buffer. If the total length is longer than max_len,
+only max_len characters will be written.
 
- ======================================================================================================
+======================================================================================================
 
 */
 
@@ -387,13 +387,13 @@ char *mkFileName(char* buffer, size_t max_len, int suffixId) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    fileSuffix
+fileSuffix
 
-    Contains and returns every suffix for all existing filenames
+Contains and returns every suffix for all existing filenames
 
- ======================================================================================================
+======================================================================================================
 */
 
 char * fileSuffix(int id) {
@@ -403,13 +403,13 @@ char * fileSuffix(int id) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    myLogger
+myLogger
 
-    Logs x,y points to svg graph
+Logs x,y points to svg graph
 
- ======================================================================================================
+======================================================================================================
 */
 void bufferLogger(char *buffer, point_t points[]) {
 	int i;
@@ -430,71 +430,72 @@ void bufferLogger(char *buffer, point_t points[]) {
 		strcat(buffer, _buffer);
 	}
 	strcat(buffer, "\" fill=\"none\" id=\"svg_3\" stroke=\"blue\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
-	for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++ ){ //xPredicted from diff Pred
+	for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++) { //xPredicted from diff Pred
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[3], points[i].xVal[3]);
 		strcat(buffer, _buffer);
 	}
-    strcat(buffer, "\" fill=\"none\" id=\"svg_4\" stroke=\"blue\" stroke-width=\"0.4px\"/>\n");
+	strcat(buffer, "\" fill=\"none\" id=\"svg_4\" stroke=\"blue\" stroke-width=\"0.4px\"/>\n");
 }
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    sum_array
+sum_array
 
-    Sum of all elements in x within a defined length
+Sum of all elements in x within a defined length
 
- ======================================================================================================
+======================================================================================================
 */
 
 double sum_array(double x[], int xlength) {
 	int i = 0;
 	double sum = 0.0;
 
-    if (xlength !=0 ){
-        for (i = 0; i < xlength; i++) {
-            sum += x[i];
-        }
-    }
+	if (xlength != 0) {
+		for (i = 0; i < xlength; i++) {
+			sum += x[i];
+		}
+	}
 	return sum;
 }
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    popNanLength
+popNanLength
 
-    returns length of new array without NAN values
+returns length of new array without NAN values
 
- ======================================================================================================
+======================================================================================================
 */
 
-double *popNAN( double *xError,int xErrorLength ) {
-    int i, counter;
-    double noNAN [xErrorLength];
+double *popNAN(double *xError, int xErrorLength) {
+	int i, counter;
+	double noNAN[10];
+	realloc(noNAN, xErrorLength);
 
-    for ( i = 0; i < xErrorLength; i++) {
-        if ( !isnan(xError[i]) ) {
-            noNAN[i] = xError[i];
-            counter++;
-        }
-    }
-    realloc(noNAN, counter * sizeof(double));
-    int noNANLength = sizeof(noNAN)/ sizeof(noNAN[0]);
-    memcpy(xError, noNAN, noNANLength);
-    return xError;
+	for (i = 0; i < xErrorLength; i++) {
+		if (!isnan(xError[i])) {
+			noNAN[i] = xError[i];
+			counter++;
+		}
+	}
+	realloc(noNAN, counter * sizeof(double));
+	int noNANLength = sizeof(noNAN) / sizeof(noNAN[0]);
+	memcpy(xError, noNAN, noNANLength);
+	return xError;
 
 }
 /*
- ======================================================================================================
+======================================================================================================
 
-    r2
+r2
 
-    returns a random double value between 0 and 1
+returns a random double value between 0 and 1
 
- ======================================================================================================
+======================================================================================================
 */
 
 double r2(void) {
@@ -503,13 +504,13 @@ double r2(void) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    rndm
+rndm
 
-    fills a double variable with random value and returns it
+fills a double variable with random value and returns it
 
- ======================================================================================================
+======================================================================================================
 */
 
 double rndm(void) {
@@ -519,13 +520,13 @@ double rndm(void) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    mkSvgGraph
+mkSvgGraph
 
-    parses template.svg and writes results in said template
+parses template.svg and writes results in said template
 
- ======================================================================================================
+======================================================================================================
 */
 
 void mkSvgGraph(point_t points[]) {
@@ -541,10 +542,10 @@ void mkSvgGraph(point_t points[]) {
 	char buffer[131072] = "";
 
 	memset(buffer, '\0', sizeof(buffer));
-	while(!feof(input)) {
+	while (!feof(input)) {
 		fgets(line, 512, input);
-		strncat(buffer, line,strlen(line));
-	//	printf("%s\n", line);
+		strncat(buffer, line, strlen(line));
+		//	printf("%s\n", line);
 		if (strstr(line, firstGraph) != NULL) {
 			bufferLogger(buffer, points);
 		}
@@ -556,14 +557,14 @@ void mkSvgGraph(point_t points[]) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    rdPPM
+rdPPM
 
-    reads data from file of type PPM, stores colorchannels in a struct in the
-    size of given picture
+reads data from file of type PPM, stores colorchannels in a struct in the
+size of given picture
 
- ======================================================================================================
+======================================================================================================
 */
 
 static imagePixel_t *rdPPM(char *fileName) {
@@ -620,14 +621,14 @@ static imagePixel_t *rdPPM(char *fileName) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    mkPpmFile
+mkPpmFile
 
-    gets output from the result of rdPpmFile and writes a new PPM file. Best Case is a
-    carbon copy of the source image. Build for debugging
+gets output from the result of rdPpmFile and writes a new PPM file. Best Case is a
+carbon copy of the source image. Build for debugging
 
- ======================================================================================================
+======================================================================================================
 */
 
 void mkPpmFile(char *fileName, imagePixel_t *image) {
@@ -645,22 +646,22 @@ void mkPpmFile(char *fileName, imagePixel_t *image) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    ppmColorChannel
+ppmColorChannel
 
-    gets one of the rgb color channels and writes them to a file
+gets one of the rgb color channels and writes them to a file
 
- ======================================================================================================
+======================================================================================================
 */
 
 int ppmColorChannel(FILE* fp, imagePixel_t *image) {
-//	int length = 1000; // (image->x * image->y) / 3;
+	//	int length = 1000; // (image->x * image->y) / 3;
 	int i = 0;
 
 	if (image) {
-		for ( i = 0; i < NUMBER_OF_SAMPLES - 1; i++ ){
-		fprintf(fp,"%d\n", image->data[i].green);
+		for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++) {
+			fprintf(fp, "%d\n", image->data[i].green);
 		}
 	}
 	fclose(fp);
@@ -669,48 +670,48 @@ int ppmColorChannel(FILE* fp, imagePixel_t *image) {
 
 
 /*
- ======================================================================================================
+======================================================================================================
 
-    colorSamples
+colorSamples
 
-    reads colorChannel values from file and stores them in xSamples as well as points datatype for
-    creating the SVG graph
+reads colorChannel values from file and stores them in xSamples as well as points datatype for
+creating the SVG graph
 
- ======================================================================================================
+======================================================================================================
 */
-void colorSamples( FILE* fp ) {
+void colorSamples(FILE* fp) {
 	int i = 0;
 	int d, out;
 	double f;
 	char  buffer[NUMBER_OF_SAMPLES];
 
-	while ( !feof(fp) ) {
-		if ( fgets(buffer, NUMBER_OF_SAMPLES, fp) != NULL ) {
-		sscanf(buffer,"%lf", &xSamples[i]);
-		//printf("%lf\n", xSamples[i] );
-		points[i].yVal[0] = xSamples[i];
-		points[i].xVal[0] = i;
-		++i;
+	while (!feof(fp)) {
+		if (fgets(buffer, NUMBER_OF_SAMPLES, fp) != NULL) {
+			sscanf(buffer, "%lf", &xSamples[i]);
+			//printf("%lf\n", xSamples[i] );
+			points[i].yVal[0] = xSamples[i];
+			points[i].xVal[0] = i;
+			++i;
 		}
 	}
 	fclose(fp);
 }
 
-double windowXMean (int _arraylength, int xCount) {
-    int count;
-    double sum = 0.0;
-    double *ptr;
-   // printf("*window\t\t*base\t\txMean\n\n");
-    for ( ptr = &xSamples[xCount - _arraylength]; ptr != &xSamples[xCount]; ptr++) { //set ptr to beginning of window
-		//window = xCount - _arraylength
-		//base = window - _arraylength;
-		//sum = 0.0;
-		//for( count = 0; count < _arraylength; count++){
-			sum += *ptr;
+double windowXMean(int _arraylength, int xCount) {
+	int count;
+	double sum = 0.0;
+	double *ptr;
+	// printf("*window\t\t*base\t\txMean\n\n");
+	for (ptr = &xSamples[xCount - _arraylength]; ptr != &xSamples[xCount]; ptr++) { //set ptr to beginning of window
+																					//window = xCount - _arraylength
+																					//base = window - _arraylength;
+																					//sum = 0.0;
+																					//for( count = 0; count < _arraylength; count++){
+		sum += *ptr;
 		//	printf("%f\n", *base);
 
 		//}
-    }
-		//printf("\n%lf\t%lf\t%lf\n", *ptr, *ptr2, (sum/(double)WINDOW));
-    return sum/(double)_arraylength;
+	}
+	//printf("\n%lf\t%lf\t%lf\n", *ptr, *ptr2, (sum/(double)WINDOW));
+	return sum / (double)_arraylength;
 }
