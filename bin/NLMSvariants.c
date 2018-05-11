@@ -32,7 +32,8 @@ typedef SSIZE_T ssize_t;
 
 //double x[] = { 0.0 };
 double xSamples[NUMBER_OF_SAMPLES] = { 0.0 };
-double w[WINDOWSIZE][NUMBER_OF_SAMPLES] = { { 0.0 },{ 0.0 } };
+
+
 
 /* *svg graph building* */
 typedef struct {
@@ -69,14 +70,16 @@ double rndm(void);
 
 /* *math* */
 double sum_array(double x[], int length);
-void directPredecessor(void);
-void localMean(void);
-void differentialPredecessor(void);
+void directPredecessor(double localweights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
+void localMean(double localweights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
+void differentialPredecessor(double localweights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
 double *popNAN(double *xError, int xErrorLength); //return new array without NAN values
 double windowXMean(int _arraylength, int xCount);
 
 
 int main(int argc, char **argv) {
+    double w[WINDOWSIZE][NUMBER_OF_SAMPLES] = { { 0.0 },{ 0.0 } };
+	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
 	char fileName[50];
 	int i, k, xLength;
 	int *colorChannel;
@@ -113,9 +116,26 @@ int main(int argc, char **argv) {
 
 
 	// math magic
-	localMean();
-	//directPredecessor();
-	//differentialPredecessor();
+	for (i = 0; i < NUMBER_OF_SAMPLES; i++){
+        for (k = 0; k < WINDOWSIZE; k++){
+            local_weights[k][i] = w[k][i];
+        }
+	}
+	localMean(local_weights);
+
+		for (i = 0; i < NUMBER_OF_SAMPLES; i++){
+        for (k = 0; k < WINDOWSIZE; k++){
+            local_weights[k][i] = w[k][i];
+        }
+	}
+	//directPredecessor(local_weights);
+		for (i = 0; i < NUMBER_OF_SAMPLES; i++){
+        for (k = 0; k < WINDOWSIZE; k++){
+            local_weights[k][i] = w[k][i];
+        }
+	}
+	//differentialPredecessor(local_weights);
+	mkSvgGraph(points);
 	// save test_array after math magic happened
 	// memset( fileName, '\0', sizeof(fileName) );
 	mkFileName(fileName, sizeof(fileName), USED_WEIGHTS);
@@ -144,9 +164,10 @@ Variant (1/3), substract local mean.
 ======================================================================================================
 */
 
-void localMean(void) {
+void localMean(double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
+
 	char fileName[50];
-	double xError[NUMBER_OF_SAMPLES]; // includes e(n)
+	double xError[2048]; // includes e(n)
 	memset(xError, 0.0, NUMBER_OF_SAMPLES);// initialize xError-array with Zero
 	int xCount = 0, i; // runtime var;
 	mkFileName(fileName, sizeof(fileName), LOCAL_MEAN);
@@ -173,7 +194,7 @@ void localMean(void) {
 		//	weightedSum += _x[ xCount-1 ] * w[xCount][0];
 
 		for (i = 1; i < _arrayLength; i++) { //get predicted value
-			xPredicted += (w[i][xCount] * (xSamples[xCount - i] - xMean));
+			xPredicted += (local_weights[i][xCount] * (xSamples[xCount - i] - xMean));
 
 		}
 		xPredicted += xMean;
@@ -195,13 +216,13 @@ void localMean(void) {
 		}
 		//printf("%f\n", xSquared);
 		for (i = 1; i < _arrayLength; i++) { //update weights
-			w[i][xCount + 1] = w[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xMean) / xSquared);
+			local_weights[i][xCount + 1] = local_weights[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xMean) / xSquared);
 		}
 
 		fprintf(fp4, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
 
 	}
-	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
+/*	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	printf("vor:%d", xErrorLength);
 	popNAN(xError, xErrorLength);
 	printf("nach:%d", xErrorLength);
@@ -215,13 +236,14 @@ void localMean(void) {
 	}
 	deviation /= xErrorLength;
 
-
 	// write in file
 	mkFileName(fileName, sizeof(fileName), RESULTS);
 	FILE *fp2 = fopen(fileName, "w");
 	fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
 	fclose(fp2);
 	fclose(fp4);
+	*/
+	//mkSvgGraph(points);
 }
 
 /*
@@ -235,29 +257,30 @@ substract direct predecessor
 ======================================================================================================
 */
 
-void directPredecessor(void) {
+void directPredecessor(double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	char fileName[512];
 	double xError[2048];
 	int xCount = 0, i;
-	double xActual;
+	double xActual = 0.0;
 	int xPredicted = 0.0;
 	// File handling
 	mkFileName(fileName, sizeof(fileName), DIRECT_PREDECESSOR);
 	FILE *fp3 = fopen(fileName, "w");
 	fprintf(fp3, "\n=====================================DirectPredecessor=====================================\n");
 
-	for (xCount = 1; xCount < NUMBER_OF_SAMPLES + 1; xCount++) {
-		//double xPartArray[xCount]; //includes all values at the size of runtime var
+
+	for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
+		//double xPartArray[1000]; //includes all values at the size of runtime var
 								   //int _sourceIndex = (xCount > WINDOWSIZE) ? xCount - WINDOWSIZE : xCount;
 		int _arrayLength = (xCount > WINDOWSIZE) ? WINDOWSIZE + 1 : xCount;
-		printf("xCount:%d, length:%d\n", xCount, _arrayLength);
-		double xMean = (xCount > 0) ? windowXMean(_arrayLength, xCount) : 0;
-		printf("%f\n", windowXMean(_arrayLength, xCount));
+		//printf("xCount:%d, length:%d\n", xCount, _arrayLength);
+		// printf("WINDOWSIZE:%f\n", windowXMean(_arrayLength, xCount));
 		xPredicted = 0.0;
 		xActual = xSamples[xCount + 1];
+		//	weightedSum += _x[ xCount-1 ] * w[xCount][0];
 
 		for (i = 1; i < _arrayLength; i++) {
-			xPredicted += (w[i][xCount] * (xSamples[xCount - 1] - xSamples[xCount - i - 1]));
+			xPredicted += (local_weights[i][xCount] * (xSamples[xCount - 1] - xSamples[xCount - i - 1]));
 		}
 		xPredicted += xSamples[xCount - 1];
 		xError[xCount] = xActual - xPredicted;
@@ -274,10 +297,10 @@ void directPredecessor(void) {
 			xSquared += pow(xSamples[xCount - 1] - xSamples[xCount - i - 1], 2); // substract direct predecessor
 		}
 		for (i = 1; i < _arrayLength; i++) {
-			w[i][xCount + 1] = w[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - 1] - xSamples[xCount - i - 1]) / xSquared);
+			local_weights[i][xCount + 1] = local_weights[i][xCount] + learnrate * xError[xCount] * ( (xSamples[xCount - 1] - xSamples[xCount - i - 1]) / xSquared);
 		}
 	}
-
+/*
 	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	printf("vor:%d", xErrorLength);
 	popNAN(xError, xErrorLength);
@@ -291,8 +314,9 @@ void directPredecessor(void) {
 	}
 	deviation /= xErrorLength;
 
-	mkSvgGraph(points);
+//	mkSvgGraph(points);
 	fprintf(fp3, "{%d}.\tLeast Mean Squared{%f}\tMean{%f}\n\n", xCount, deviation, mean);
+	*/
 	fclose(fp3);
 }
 
@@ -307,24 +331,26 @@ differenital predecessor.
 
 ======================================================================================================
 */
-void differentialPredecessor(void) {
+void differentialPredecessor(double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 
 	char fileName[512];
 	double xError[2048];
 	int xCount = 0, i;
-	double xActual;
+	double xPredicted = 0.0;
+	double xActual = 0.0;
 
 	// File handling
 	mkFileName(fileName, sizeof(fileName), DIFFERENTIAL_PREDECESSOR);
 	FILE *fp6 = fopen(fileName, "w");
 	fprintf(fp6, "\n=====================================DifferentialPredecessor=====================================\n");
 
-	for (xCount = 1; xCount < NUMBER_OF_SAMPLES + 1; xCount++) {
-		xActual = xSamples[xCount + 1];
+		for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
+
+		int _arrayLength = (xCount > WINDOWSIZE) ? WINDOWSIZE + 1 : xCount;
 		double xPredicted = 0.0;
 
-		for (i = 1; i < xCount; i++) {
-			xPredicted += (w[i][xCount] * (xSamples[xCount - i] - xSamples[xCount - i - 1]));
+		for (i = 1; i < _arrayLength; i++) {
+			xPredicted += (local_weights[i][xCount] * (xSamples[xCount - i] - xSamples[xCount - i - 1]));
 		}
 		xPredicted += xSamples[xCount - 1];
 		xError[xCount] = xActual - xPredicted;
@@ -336,14 +362,19 @@ void differentialPredecessor(void) {
 		points[xCount].yVal[6] = xError[xCount];
 		double xSquared = 0.0;
 
-		for (i = 1; i < xCount; i++) {
+		for (i = 1; i < _arrayLength; i++) {
 			xSquared += pow(xSamples[xCount - i] - xSamples[xCount - i - 1], 2); // substract direct predecessor
 		}
-		for (i = 1; i < xCount; i++) {
-			w[i][xCount + 1] = w[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xSamples[xCount - i - 1]) / xSquared);
+		for (i = 1; i < _arrayLength; i++) {
+			local_weights[i][xCount + 1] = local_weights[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xSamples[xCount - i - 1]) / xSquared);
 		}
 	}
+/*
 	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
+	printf("vor:%d", xErrorLength);
+	popNAN(xError, xErrorLength);
+	printf("nach:%d", xErrorLength);
+	xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	double mean = sum_array(xError, xErrorLength) / xErrorLength;
 	double deviation = 0.0;
 
@@ -352,8 +383,9 @@ void differentialPredecessor(void) {
 	}
 	deviation /= xErrorLength;
 
-	mkSvgGraph(points);
+	//mkSvgGraph(points);
 	fprintf(fp6, "{%d}.\tLeast Mean Squared{%f}\tMean{%f}\n\n", xCount, deviation, mean);
+*/
 	fclose(fp6);
 
 
@@ -530,8 +562,8 @@ parses template.svg and writes results in said template
 */
 
 void mkSvgGraph(point_t points[]) {
-	FILE *input = fopen("template.svg", "r");
-	FILE *target = fopen("output.svg", "w");
+	FILE *input = fopen("GraphResults_template.html", "r");
+	FILE *target = fopen("GraphResults.html", "w");
 	char line[512];
 	char firstGraph[15] = { "<path d=\"M0 0" };
 
