@@ -13,7 +13,7 @@
 #include <string.h>
 #include <float.h> // DBL_MAX
 
-#define NUMBER_OF_SAMPLES 500
+#define NUMBER_OF_SAMPLES 1000
 #define WINDOWSIZE 5
 #define tracking 40 //Count of weights
 #define learnrate 0.8
@@ -68,20 +68,19 @@ double rndm(void);
 
 /* *math* */
 double sum_array(double x[], int length);
-void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
-void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
-void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
-//void differentialPredecessor(double *weights);
-double *popNAN(double *xError); //return new array without NAN values
+void directPredecessor(double *weights);
+void localMean(double *weights);
+//void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
+void differentialPredecessor(double *weights);
+double *popNAN(double *xError, int xErrorLength); //return new array without NAN values
 double windowXMean(int _arraylength, int xCount);
 
 
-//int main(int argc, char **argv) {
-int main( void ) {
-    	double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]; // = { { 0.0 }, {0.0} };
+int main(int argc, char **argv) {
+    	double weights[WINDOWSIZE] =  { 0.0 };
 //	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
 	char fileName[50];
-	int i,k, xLength;	
+	int i, xLength;	
 	imagePixel_t *image;
 
 	image = rdPPM("beaches.ppm");
@@ -95,21 +94,21 @@ int main( void ) {
 
 	srand((unsigned int)time(NULL));
 
-	for (i = 0; i < NUMBER_OF_SAMPLES; i++) {
+	for (i = 0; i < WINDOWSIZE; i++) {
 		//_x[i] += ((255.0 / M) * i); // Init test values
-		for (int k = 0; k < WINDOWSIZE; k++) {
-			weights[k][i] = rndm(); // Init weights
-		}
+	//	for (int k = 0; k < WINDOWSIZE; k++) {
+			weights[i] = rndm(); // Init weights
+	//	}
 	}
 
 	mkFileName(fileName, sizeof(fileName), PURE_WEIGHTS);
 	// save plain test_array before math magic happens
 	FILE *fp0 = fopen(fileName, "w");
-	for (i = 0; i < tracking; i++) {
-		for (k = 0; k < WINDOWSIZE; k++) {
-			fprintf(fp0, "[%d][%d]%lf\n", k, i, weights[k][i]);
+	for (i = 0; i < WINDOWSIZE; i++) {
+//		for (k = 0; k < WINDOWSIZE; k++) {
+			fprintf(fp0, "[%d]%lf\n", i, weights[i]);
 		}
-	}
+//	}
 	fclose(fp0);
 
 
@@ -122,9 +121,9 @@ int main( void ) {
 	}*/
 	localMean(weights);
 //	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
-//	directPredecessor(weights);
+	directPredecessor(weights);
 //	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
-//	differentialPredecessor(weights);
+	differentialPredecessor(weights);
 	mkSvgGraph(points);
 	// save test_array after math magic happened
 	// memset( fileName, '\0', sizeof(fileName) );
@@ -153,11 +152,9 @@ Variant (1/3), substract local mean.
 ======================================================================================================
 */
 
-void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {	
-	//double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
-	double (*local_weights)[WINDOWSIZE] = malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
-//	double *local_weights[WINDOWSIZE];
-	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
+void localMean(double *weights) {	
+	double local_weights[WINDOWSIZE];
+	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE);
 	char fileName[50];
 	double xError[2048]; // includes e(n)
 	memset(xError, 0.0, NUMBER_OF_SAMPLES);// initialize xError-array with Zero
@@ -183,12 +180,12 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		//	weightedSum += _x[ xCount-1 ] * w[xCount][0];
 
 		for (i = 1; i < _arrayLength; i++) { //get predicted value
-			xPredicted += (local_weights[i][xCount] * (xSamples[xCount - i] - xMean));
+			xPredicted += (local_weights[i] * (xSamples[xCount - i] - xMean));
 
 		}
 		xPredicted += xMean;
 		xError[xCount] = xActual - xPredicted;
-	//	printf("Pred: %f\t\tActual:%f\n", xPredicted, xActual);
+		printf("Pred: %f\t\tActual:%f\n", xPredicted, xActual);
 		points[xCount].xVal[1] = xCount;
 		points[xCount].yVal[1] = xPredicted;
 		points[xCount].xVal[4] = xCount;
@@ -203,25 +200,24 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 			xSquared = 1.0;
 		}
 		//printf("%f\n", xSquared);
+
 		for (i = 1; i < _arrayLength; i++) { //update weights
-			local_weights[i][xCount+1] = local_weights[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xMean) / xSquared);
-		//	printf("NEU::%lf\n", local_weights[i][xCount]);
+			local_weights[i] = local_weights[i] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xMean) / xSquared);
+		//	printf("NEU::%lf\n", local_weights[i]);
 		}
-
 		fprintf(fp4, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
-
+		
 	}
-//	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
-//	printf("vor:%d", xErrorLength);
-	popNAN(xError); // delete NAN values from xError[]
-//	printf("%lf", xError[499]);
-	double  xErrorLength = xError[0]; // Watch popNAN()!
-	printf("Xerrorl:%lf", xErrorLength);
+	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
+	printf("vor:%d", xErrorLength);
+	popNAN(xError, xErrorLength);
+	printf("nach:%d", xErrorLength);
+	xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	double mean = sum_array(xError, xErrorLength) / xErrorLength;
 	double deviation = 0.0;
 
 	// Mean square
-	for (i = 1; i < xErrorLength; i++) {
+	for (i = 0; i < xErrorLength - 1; i++) {
 		deviation += pow(xError[i] - mean, 2);
 	}
 	deviation /= xErrorLength;
@@ -231,11 +227,10 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	FILE *fp2 = fopen(fileName, "w");
 	fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
 	fclose(fp2);
-	free(local_weights);
 	fclose(fp4);
 	
 //	weightsLogger( local_weights, USED_WEIGHTS );
-	mkSvgGraph(points);
+	//mkSvgGraph(points);
 	
 }
 
@@ -250,11 +245,9 @@ substract direct predecessor
 ======================================================================================================
 */
 
-void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
-	double (*local_weights)[WINDOWSIZE] = malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
-
-//	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
-	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES );
+void directPredecessor(double *weights) {
+	double local_weights[WINDOWSIZE];
+	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE );
 	char fileName[512];
 	double xError[2048];
 	int xCount = 0, i;
@@ -277,7 +270,7 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		//	weightedSum += _x[ xCount-1 ] * w[xCount][0];
 
 		for (i = 1; i < _arrayLength; i++) {
-			xPredicted += (local_weights[i][xCount] * (xSamples[xCount - 1] - xSamples[xCount - i - 1]));
+			xPredicted += (local_weights[i] * (xSamples[xCount - 1] - xSamples[xCount - i - 1]));
 		}
 		xPredicted += xSamples[xCount - 1];
 		xError[xCount] = xActual - xPredicted;
@@ -294,13 +287,13 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 			xSquared += pow(xSamples[xCount - 1] - xSamples[xCount - i - 1], 2); // substract direct predecessor
 		}
 		for (i = 1; i < _arrayLength; i++) {
-			local_weights[i][xCount+1] = local_weights[i][xCount] + learnrate * xError[xCount] * ( (xSamples[xCount - 1] - xSamples[xCount - i - 1]) / xSquared);
+			local_weights[i] = local_weights[i] + learnrate * xError[xCount] * ( (xSamples[xCount - 1] - xSamples[xCount - i - 1]) / xSquared);
 		}
 	}
 
 	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	printf("vor:%d", xErrorLength);
-	popNAN(xError);
+	popNAN(xError, xErrorLength);
 	printf("nach:%d", xErrorLength);
 	xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	double mean = sum_array(xError, xErrorLength) / xErrorLength;
@@ -328,11 +321,9 @@ differenital predecessor.
 
 ======================================================================================================
 */
-void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
-//	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];	
-	double (*local_weights)[WINDOWSIZE] = malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
-
-	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES );
+void differentialPredecessor(double *weights) {
+	double local_weights[WINDOWSIZE];
+	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE );
 	char fileName[512];
 	double xError[2048];
 	int xCount = 0, i;
@@ -345,18 +336,17 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	fprintf(fp6, "\n=====================================DifferentialPredecessor=====================================\n");
 
 		for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
-
-		int _arrayLength = (xCount > WINDOWSIZE) ? WINDOWSIZE + 1 : xCount;
+		xActual = xSamples[xCount +1];	
 		xPredicted = 0.0;
-		xActual = xSamples[xCount + 1];
+		int _arrayLength = (xCount > WINDOWSIZE) ? WINDOWSIZE + 1 : xCount;
 
 		for (i = 1; i < _arrayLength; i++) {
-			xPredicted += (local_weights[i][xCount] * (xSamples[xCount - i] - xSamples[xCount - i - 1]));
+			xPredicted += (local_weights[i] * (xSamples[xCount - i] - xSamples[xCount - i - 1]));
 		}
 		xPredicted += xSamples[xCount - 1];
 		xError[xCount] = xActual - xPredicted;
 
-		fprintf(fp6, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
+		fprintf(fp6, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xSamples[xCount], xError[xCount]);
 		points[xCount].xVal[3] = xCount;
 		points[xCount].yVal[3] = xPredicted;
 		points[xCount].xVal[6] = xCount;
@@ -366,14 +356,20 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		for (i = 1; i < _arrayLength; i++) {
 			xSquared += pow(xSamples[xCount - i] - xSamples[xCount - i - 1], 2); // substract direct predecessor
 		}
-		for (i = 1; i < _arrayLength; i++) {
-			local_weights[i][xCount+1] = local_weights[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xSamples[xCount - i - 1]) / xSquared);
+		if (xSquared == 0.0 ){
+			xSquared = 1.0;
 		}
+
+		for (i = 1; i < _arrayLength; i++) {
+			local_weights[i] = local_weights[i] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xSamples[xCount - i - 1]) / xSquared);
+			printf("NEU::%lf\n", local_weights[i]);
+		}
+
 	}
 
 	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	printf("vor:%d", xErrorLength);
-	popNAN(xError);
+	popNAN(xError, xErrorLength);
 	printf("nach:%d", xErrorLength);
 	xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	double mean = sum_array(xError, xErrorLength) / xErrorLength;
@@ -444,7 +440,7 @@ Logs x,y points to svg graph
 
 ======================================================================================================
 */
-
+/*
 void weightsLogger (double weights[WINDOWSIZE], int val ) {
 	char fileName[512];
 	int i;
@@ -458,7 +454,7 @@ void weightsLogger (double weights[WINDOWSIZE], int val ) {
 	fprintf(fp,"\n\n\n\n=====================NEXT=====================\n");
 	fclose(fp);
 }
-	
+*/	
 
 void bufferLogger(char *buffer, point_t points[]) {
 	int i;
@@ -520,31 +516,33 @@ returns length of new array without NAN values
 ======================================================================================================
 */
 
-double *popNAN(double *xError) {
-	int i, counter = 1; 
-	double tmpLength = 0.0;
+double *popNAN(double *xError, int xErrorLength) {
+	int i, counter;
 	double *tmp = NULL;
 	double *more_tmp = NULL;
-	
-//	printf("LENGTH: %d", xErrorLength);
+ 	//tmp = realloc( noNAN, xErrorLength * sizeof(double) );
 
-	for ( i = 0; i < NUMBER_OF_SAMPLES; i++ ) {
+	for ( i = 0; i < xErrorLength; i++ ) {
 		counter ++;
 		more_tmp = (double *) realloc ( tmp, counter*(sizeof(double) ));
 			if ( !isnan(xError[i]) ) {
 				tmp = more_tmp;
 				tmp[counter - 1] = xError[i];
-				printf("xERROR:%lf\n", tmp[counter - 1]);
-				tmpLength++; 
+				 
 			}
 	}
-	counter += 1;
-	more_tmp = (double *) realloc ( tmp, counter * sizeof(double) );
-	tmp = more_tmp;
-	tmp = &tmpLength; // Length of array has to be stored in tmp[0], 
-				    // Cause length is needed later on in the math functions.
-				    // xError counting has to begin with 1 in the other functions !
-	printf("tmpLength in tmp:%lf, %lf\n", tmp[counter-2], *tmp);
+
+/*	for (i = 0; i < xErrorLength; i++) {
+		if (!isnan(xError[i])) {
+			tmp[i] = xError[i];
+			counter++;
+		}
+	}
+*/
+	//realloc(noNAN, counter * sizeof(double));
+	//int tmpLength = sizeof(noNAN) / sizeof(noNAN[0]);
+	//memcpy(xError, tmp, tmpLength);
+	//return xError;
 	return tmp;
 
 }
