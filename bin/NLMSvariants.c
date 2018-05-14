@@ -31,7 +31,6 @@ enum fileSuffix_t{ // used in conjunction with mkFileName()
     DIFFERENTIAL_PREDECESSOR
 };
 
-//double x[] = { 0.0 };
 double xSamples[NUMBER_OF_SAMPLES] = { 0.0 };
 
 /* *svg graph building* */
@@ -158,12 +157,9 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	double xActual = 0.0;
 
 	for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
-		//double xPartArray[1000]; //includes all values at the size of runtime var
-		//int _sourceIndex = (xCount > WINDOWSIZE) ? xCount - WINDOWSIZE : xCount;
+
 		int _arrayLength = ( xCount > WINDOWSIZE ) ? WINDOWSIZE + 1 : xCount;
-		//printf("xCount:%d, length:%d\n", xCount, _arrayLength);
 		xMean = (xCount > 0) ? windowXMean(_arrayLength, xCount) : 0;
-		// printf("WINDOWSIZE:%f\n", windowXMean(_arrayLength, xCount));
 		xPredicted = 0.0;
 		xActual = xSamples[xCount + 1];
 		//	weightedSum += _x[ xCount-1 ] * w[xCount][0];
@@ -181,26 +177,19 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		xSquared = 0.0;
 		for (i = 1; i < _arrayLength; i++) { //get xSquared
 			xSquared += pow(xSamples[xCount - i] - xMean, 2);
-		//	printf("xSquared:%f\n", xSquared);
 		}
 		if (xSquared == 0.0) { // Otherwise returns Pred: -1.#IND00 in some occassions
 			xSquared = 1.0;
 		}
-		//printf("%f\n", xSquared);
 		for (i = 1; i < _arrayLength; i++) { //update weights
 			local_weights[i][xCount+1] = local_weights[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xMean) / xSquared);
-		//	printf("NEU::%lf\n", local_weights[i][xCount]);
 		}
 		fprintf(fp4, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);
 	}
-//	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
-//	printf("vor:%d", xErrorLength);
 	double *xErrorPtr = popNAN(xError); // delete NAN values from xError[]
-	//printf("%lf", xErrorPtr[499]);
 	double  xErrorLength = *xErrorPtr; // Watch popNAN()!
     xErrorPtr[0] = 0.0;
 	printf("Xerrorl:%lf", xErrorLength);
-
 	double mean = sum_array(xErrorPtr, xErrorLength) / xErrorLength;
 	double deviation = 0.0;
 
