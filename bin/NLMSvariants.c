@@ -13,6 +13,7 @@
 #include <string.h>
 #include <float.h> // DBL_MAX
 
+
 #define NUMBER_OF_SAMPLES 500
 #define WINDOWSIZE 5
 #define tracking 40 //Count of weights
@@ -32,6 +33,9 @@ typedef SSIZE_T ssize_t;
 
 //double x[] = { 0.0 };
 double xSamples[NUMBER_OF_SAMPLES] = { 0.0 };
+
+
+
 
 /* *svg graph building* */
 typedef struct {
@@ -81,10 +85,10 @@ int main( void ) {
     	double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]; // = { { 0.0 }, {0.0} };
 //	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
 	char fileName[50];
-	int i,k, xLength;	
+	int i,k, xLength;
 	imagePixel_t *image;
 
-	image = rdPPM("beaches.ppm");
+	image = rdPPM("cow.ppm");
 	mkFileName(fileName, sizeof(fileName), TEST_VALUES);
 	FILE* fp5 = fopen(fileName, "w");
 	xLength = ppmColorChannel(fp5, image);
@@ -120,11 +124,11 @@ int main( void ) {
 	    printf("ALT::%f\n", local_weights[k][i]);
         	}
 	}*/
-	localMean(weights);
+	//localMean(weights);
 //	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
 //	directPredecessor(weights);
 //	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
-//	differentialPredecessor(weights);
+	differentialPredecessor(weights);
 	mkSvgGraph(points);
 	// save test_array after math magic happened
 	// memset( fileName, '\0', sizeof(fileName) );
@@ -153,7 +157,7 @@ Variant (1/3), substract local mean.
 ======================================================================================================
 */
 
-void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {	
+void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	//double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
 	double (*local_weights)[WINDOWSIZE] = malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
 //	double *local_weights[WINDOWSIZE];
@@ -166,11 +170,11 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	FILE* fp4 = fopen(fileName, "w");
 	fprintf(fp4, "\n=====================================LocalMean=====================================\n");
 
-	double xMean = xSamples[0];	
+	double xMean = xSamples[0];
 	double xSquared = 0.0;
 	double xPredicted = 0.0;
 	double xActual = 0.0;
-	
+
 	for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
 		//double xPartArray[1000]; //includes all values at the size of runtime var
 		//int _sourceIndex = (xCount > WINDOWSIZE) ? xCount - WINDOWSIZE : xCount;
@@ -213,11 +217,12 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	}
 //	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
 //	printf("vor:%d", xErrorLength);
-	popNAN(xError); // delete NAN values from xError[]
-//	printf("%lf", xError[499]);
-	double  xErrorLength = xError[0]; // Watch popNAN()!
+	double *xErrorPtr = popNAN(xError); // delete NAN values from xError[]
+	//printf("%lf", xErrorPtr[499]);
+	double  xErrorLength = *xErrorPtr; // Watch popNAN()!
+
 	printf("Xerrorl:%lf", xErrorLength);
-	double mean = sum_array(xError, xErrorLength) / xErrorLength;
+/*	double mean = sum_array(*xErrorPtr, xErrorLength) / xErrorLength;
 	double deviation = 0.0;
 
 	// Mean square
@@ -230,13 +235,13 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	mkFileName(fileName, sizeof(fileName), RESULTS);
 	FILE *fp2 = fopen(fileName, "w");
 	fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
-	fclose(fp2);
+	fclose(fp2);*/
 	free(local_weights);
 	fclose(fp4);
-	
+
 //	weightsLogger( local_weights, USED_WEIGHTS );
 	mkSvgGraph(points);
-	
+
 }
 
 /*
@@ -329,7 +334,7 @@ differenital predecessor.
 ======================================================================================================
 */
 void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
-//	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];	
+//	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
 	double (*local_weights)[WINDOWSIZE] = malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
 
 	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES );
@@ -370,7 +375,7 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 			local_weights[i][xCount+1] = local_weights[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xSamples[xCount - i - 1]) / xSquared);
 		}
 	}
-
+/*
 	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	printf("vor:%d", xErrorLength);
 	popNAN(xError);
@@ -386,7 +391,7 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 
 	//mkSvgGraph(points);
 	fprintf(fp6, "{%d}.\tLeast Mean Squared{%f}\tMean{%f}\n\n", xCount, deviation, mean);
-
+*/
 	fclose(fp6);
 
 
@@ -458,7 +463,7 @@ void weightsLogger (double weights[WINDOWSIZE], int val ) {
 	fprintf(fp,"\n\n\n\n=====================NEXT=====================\n");
 	fclose(fp);
 }
-	
+
 
 void bufferLogger(char *buffer, point_t points[]) {
 	int i;
@@ -469,7 +474,7 @@ void bufferLogger(char *buffer, point_t points[]) {
 		strcat(buffer, _buffer);
 	}
 	strcat(buffer, "\" fill=\"none\" id=\"svg_1\" stroke=\"black\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
-	for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++) { // xPrediceted from localMean
+	for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++) { // xPredicted from localMean
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[1], points[i].yVal[1]);
 		strcat(buffer, _buffer);
 	}
@@ -483,7 +488,7 @@ void bufferLogger(char *buffer, point_t points[]) {
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[3], points[i].xVal[3]);
 		strcat(buffer, _buffer);
 	}
-	strcat(buffer, "\" fill=\"none\" id=\"svg_4\" stroke=\"blue\" stroke-width=\"0.4px\"/>\n");
+	strcat(buffer, "\" fill=\"none\" id=\"svg_4\" stroke=\"red\" stroke-width=\"0.4px\"/>\n");
 }
 
 
@@ -521,11 +526,11 @@ returns length of new array without NAN values
 */
 
 double *popNAN(double *xError) {
-	int i, counter = 1; 
+	int i, counter = 1;
 	double tmpLength = 0.0;
 	double *tmp = NULL;
 	double *more_tmp = NULL;
-	
+
 //	printf("LENGTH: %d", xErrorLength);
 
 	for ( i = 0; i < NUMBER_OF_SAMPLES; i++ ) {
@@ -535,13 +540,13 @@ double *popNAN(double *xError) {
 				tmp = more_tmp;
 				tmp[counter - 1] = xError[i];
 				printf("xERROR:%lf\n", tmp[counter - 1]);
-				tmpLength++; 
+				tmpLength++;
 			}
 	}
 	counter += 1;
 	more_tmp = (double *) realloc ( tmp, counter * sizeof(double) );
 	tmp = more_tmp;
-	tmp = &tmpLength; // Length of array has to be stored in tmp[0], 
+	*tmp = tmpLength; // Length of array has to be stored in tmp[0],
 				    // Cause length is needed later on in the math functions.
 				    // xError counting has to begin with 1 in the other functions !
 	printf("tmpLength in tmp:%lf, %lf\n", tmp[counter-2], *tmp);
@@ -740,7 +745,7 @@ creating the SVG graph
 ======================================================================================================
 */
 void colorSamples(FILE* fp) {
-	int i = 0;	
+	int i = 0;
 	char  buffer[NUMBER_OF_SAMPLES];
 
 	while (!feof(fp)) {
