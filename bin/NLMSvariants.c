@@ -45,7 +45,7 @@ typedef struct {
 
 point_t points[NUMBER_OF_SAMPLES]; // [0] = xActual, [1]=xpredicted from localMean, [2]=xpredicted from directPredecessor, [3] = xpredicted from differentialpredecessor, [4] = xError from localMean, [5] xError from directPredecessor, [6] xError from differentialPredecessor
 
-								   /* *ppm read, copy, write* */
+/* *ppm read, copy, write* */
 typedef struct {
 	unsigned char red, green, blue;
 }colorChannel_t;
@@ -82,7 +82,7 @@ double windowXMean(int _arraylength, int xCount);
 
 //int main(int argc, char **argv) {
 int main( void ) {
-    	double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]; // = { { 0.0 }, {0.0} };
+    double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]; // = { { 0.0 }, {0.0} };
 //	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
 	char fileName[50];
 	int i,k, xLength;
@@ -100,7 +100,6 @@ int main( void ) {
 	srand((unsigned int)time(NULL));
 
 	for (i = 0; i < NUMBER_OF_SAMPLES; i++) {
-		//_x[i] += ((255.0 / M) * i); // Init test values
 		for (int k = 0; k < WINDOWSIZE; k++) {
 			weights[k][i] = rndm(); // Init weights
 		}
@@ -118,16 +117,10 @@ int main( void ) {
 
 
 	// math magic
-/*	for (i = 0; i < NUMBER_OF_SAMPLES; i++){
-       	 for (k = 0; k < WINDOWSIZE; k++){
-            local_weights[k][i] = weights[k][i];
-	    printf("ALT::%f\n", local_weights[k][i]);
-        	}
-	}*/
-	//localMean(weights);
-//	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
-//	directPredecessor(weights);
-//	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
+    localMean(weights);
+	//memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
+	directPredecessor(weights);
+	//memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
 	differentialPredecessor(weights);
 	mkSvgGraph(points);
 	// save test_array after math magic happened
@@ -168,7 +161,7 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	int xCount = 0, i; // runtime var;
 	mkFileName(fileName, sizeof(fileName), LOCAL_MEAN);
 	FILE* fp4 = fopen(fileName, "w");
-	fprintf(fp4, "\n=====================================LocalMean=====================================\n");
+	fprintf(fp4, "\n=====================================LocalMean=====================================\nNo.\txPredicted\txActual\t\txError\n");
 
 	double xMean = xSamples[0];
 	double xSquared = 0.0;
@@ -212,7 +205,7 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		//	printf("NEU::%lf\n", local_weights[i][xCount]);
 		}
 
-		fprintf(fp4, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
+		fprintf(fp4, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);
 
 	}
 //	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
@@ -220,9 +213,10 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	double *xErrorPtr = popNAN(xError); // delete NAN values from xError[]
 	//printf("%lf", xErrorPtr[499]);
 	double  xErrorLength = *xErrorPtr; // Watch popNAN()!
-
+    xErrorPtr[0] = 0.0;
 	printf("Xerrorl:%lf", xErrorLength);
-/*	double mean = sum_array(*xErrorPtr, xErrorLength) / xErrorLength;
+
+	double mean = sum_array(xErrorPtr, xErrorLength) / xErrorLength;
 	double deviation = 0.0;
 
 	// Mean square
@@ -230,17 +224,18 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		deviation += pow(xError[i] - mean, 2);
 	}
 	deviation /= xErrorLength;
+	printf("mean:%lf, devitation:%lf", mean, deviation);
 
 	// write in file
 	mkFileName(fileName, sizeof(fileName), RESULTS);
 	FILE *fp2 = fopen(fileName, "w");
 	fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
-	fclose(fp2);*/
+	fclose(fp2);
 	free(local_weights);
 	fclose(fp4);
 
-//	weightsLogger( local_weights, USED_WEIGHTS );
-	mkSvgGraph(points);
+	weightsLogger( local_weights, USED_WEIGHTS );
+	//mkSvgGraph(points);
 
 }
 
@@ -268,7 +263,7 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	// File handling
 	mkFileName(fileName, sizeof(fileName), DIRECT_PREDECESSOR);
 	FILE *fp3 = fopen(fileName, "w");
-	fprintf(fp3, "\n=====================================DirectPredecessor=====================================\n");
+	fprintf(fp3, "\n=====================================DirectPredecessor=====================================\nNo.\txPredicted\txAcutal\t\txError\n");
 
 
 	for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
@@ -287,7 +282,7 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		xPredicted += xSamples[xCount - 1];
 		xError[xCount] = xActual - xPredicted;
 
-		fprintf(fp3, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
+		//fprintf(fp3, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
 		points[xCount].xVal[2] = xCount;
 		points[xCount].yVal[2] = xPredicted;
 		points[xCount].xVal[5] = xCount;
@@ -301,25 +296,34 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		for (i = 1; i < _arrayLength; i++) {
 			local_weights[i][xCount+1] = local_weights[i][xCount] + learnrate * xError[xCount] * ( (xSamples[xCount - 1] - xSamples[xCount - i - 1]) / xSquared);
 		}
+        fprintf(fp3, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);
 	}
+	fclose(fp3);
+	double *xErrorPtr = popNAN(xError); // delete NAN values from xError[]
+	//printf("%lf", xErrorPtr[499]);
+	double  xErrorLength = *xErrorPtr; // Watch popNAN()!
+    xErrorPtr[0] = 0.0;
+	printf("Xerrorl:%lf", xErrorLength);
 
-	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
-	printf("vor:%d", xErrorLength);
-	popNAN(xError);
-	printf("nach:%d", xErrorLength);
-	xErrorLength = sizeof(xError) / sizeof(xError[0]);
-	double mean = sum_array(xError, xErrorLength) / xErrorLength;
+	double mean = sum_array(xErrorPtr, xErrorLength) / xErrorLength;
 	double deviation = 0.0;
 
-	for (i = 0; i < xErrorLength - 1; i++) {
+	// Mean square
+	for (i = 1; i < xErrorLength; i++) {
 		deviation += pow(xError[i] - mean, 2);
 	}
 	deviation /= xErrorLength;
+	printf("mean:%lf, devitation:%lf", mean, deviation);
 
-//	mkSvgGraph(points);
-	fprintf(fp3, "{%d}.\tLeast Mean Squared{%f}\tMean{%f}\n\n", xCount, deviation, mean);
+	// write in file
+	mkFileName(fileName, sizeof(fileName), RESULTS);
+	FILE *fp2 = fopen(fileName, "wa");
+	fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
+	fclose(fp2);
+	free(local_weights);
 
-	fclose(fp3);
+	weightsLogger( local_weights, USED_WEIGHTS );
+	//mkSvgGraph(points);
 }
 
 
@@ -329,7 +333,7 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 differentialPredecessor
 
 variant (3/3),
-differenital predecessor.
+differential predecessor.
 
 ======================================================================================================
 */
@@ -347,7 +351,7 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	// File handling
 	mkFileName(fileName, sizeof(fileName), DIFFERENTIAL_PREDECESSOR);
 	FILE *fp6 = fopen(fileName, "w");
-	fprintf(fp6, "\n=====================================DifferentialPredecessor=====================================\n");
+	fprintf(fp6, "\n=====================================DifferentialPredecessor=====================================\nNo.\txPredicted\txAcutal\t\txError\n");
 
 		for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
 
@@ -361,7 +365,7 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		xPredicted += xSamples[xCount - 1];
 		xError[xCount] = xActual - xPredicted;
 
-		fprintf(fp6, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
+		//fprintf(fp6, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
 		points[xCount].xVal[3] = xCount;
 		points[xCount].yVal[3] = xPredicted;
 		points[xCount].xVal[6] = xCount;
@@ -374,9 +378,10 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		for (i = 1; i < _arrayLength; i++) {
 			local_weights[i][xCount+1] = local_weights[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xSamples[xCount - i - 1]) / xSquared);
 		}
+        fprintf(fp6, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);
 	}
-/*
-	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
+    fclose(fp6);
+/*	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	printf("vor:%d", xErrorLength);
 	popNAN(xError);
 	printf("nach:%d", xErrorLength);
@@ -392,7 +397,32 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	//mkSvgGraph(points);
 	fprintf(fp6, "{%d}.\tLeast Mean Squared{%f}\tMean{%f}\n\n", xCount, deviation, mean);
 */
-	fclose(fp6);
+	double *xErrorPtr = popNAN(xError); // delete NAN values from xError[]
+	//printf("%lf", xErrorPtr[499]);
+	double  xErrorLength = *xErrorPtr; // Watch popNAN()!
+    xErrorPtr[0] = 0.0;
+	printf("Xerrorl:%lf", xErrorLength);
+
+	double mean = sum_array(xErrorPtr, xErrorLength) / xErrorLength;
+	double deviation = 0.0;
+
+	// Mean square
+	for (i = 1; i < xErrorLength; i++) {
+		deviation += pow(xError[i] - mean, 2);
+	}
+	deviation /= xErrorLength;
+	printf("mean:%lf, devitation:%lf", mean, deviation);
+
+	// write in file
+	mkFileName(fileName, sizeof(fileName), RESULTS);
+	FILE *fp2 = fopen(fileName, "wa");
+	fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
+	fclose(fp2);
+	free(local_weights);
+
+	weightsLogger( local_weights, USED_WEIGHTS );
+	//mkSvgGraph(points);
+
 
 
 }
@@ -461,7 +491,7 @@ void weightsLogger (double weights[WINDOWSIZE], int val ) {
 	//	}
 	}
 	fprintf(fp,"\n\n\n\n=====================NEXT=====================\n");
-	fclose(fp);
+	//fclose(fp);
 }
 
 
@@ -485,7 +515,7 @@ void bufferLogger(char *buffer, point_t points[]) {
 	}
 	strcat(buffer, "\" fill=\"none\" id=\"svg_3\" stroke=\"blue\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
 	for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++) { //xPredicted from diff Pred
-		sprintf(_buffer, "L %f %f\n", points[i].xVal[3], points[i].xVal[3]);
+		sprintf(_buffer, "L %f %f\n", points[i].xVal[3], points[i].yVal[3]);
 		strcat(buffer, _buffer);
 	}
 	strcat(buffer, "\" fill=\"none\" id=\"svg_4\" stroke=\"red\" stroke-width=\"0.4px\"/>\n");
