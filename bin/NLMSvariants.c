@@ -14,20 +14,22 @@
 
 #define NUMBER_OF_SAMPLES 500
 #define WINDOWSIZE 5
-#define tracking 40 //Count of weights
 #define learnrate 0.8
-#define PURE_WEIGHTS 0
-#define USED_WEIGHTS 1
-#define RESULTS 3
-#define DIRECT_PREDECESSOR 2
-#define LOCAL_MEAN 4
-#define TEST_VALUES 5
-#define DIFFERENTIAL_PREDECESSOR 6
 #define RGB_COLOR 255
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
 typedef SSIZE_T ssize_t;
 #endif
+
+enum fileSuffix_t{ // used in conjunction with mkFileName()
+    PURE_WEIGHTS,
+    USED_WEIGHTS,
+    DIRECT_PREDECESSOR,
+    RESULTS,
+    LOCAL_MEAN,
+    TEST_VALUES,
+    DIFFERENTIAL_PREDECESSOR
+};
 
 //double x[] = { 0.0 };
 double xSamples[NUMBER_OF_SAMPLES] = { 0.0 };
@@ -88,7 +90,6 @@ int main( void ) {
 	FILE* fp5 = fopen(fileName, "w");
 	xLength = ppmColorChannel(fp5, image);
 	printf("%d\n", xLength);
-
 	FILE* fp6 = fopen(fileName, "r");
 	colorSamples(fp6);
 
@@ -98,7 +99,6 @@ int main( void ) {
 			weights[k][i] = rndm(); // Init weights
 		}
 	}
-
 	mkFileName(fileName, sizeof(fileName), PURE_WEIGHTS);
 	// save plain test_array before math magic happens
 	FILE *fp0 = fopen(fileName, "w");
@@ -108,12 +108,9 @@ int main( void ) {
 		}
 	}
 	fclose(fp0);
-
 	// math magic
     localMean(weights);
-	//memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
 	directPredecessor(weights);
-	//memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
 	differentialPredecessor(weights);
 	mkSvgGraph(points);
 	// save test_array after math magic happened
