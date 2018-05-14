@@ -5,14 +5,12 @@
 //  Created by FBRDNLMS on 26.04.18.
 //
 //
-
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <float.h> // DBL_MAX
-
 
 #define NUMBER_OF_SAMPLES 500
 #define WINDOWSIZE 5
@@ -33,9 +31,6 @@ typedef SSIZE_T ssize_t;
 
 //double x[] = { 0.0 };
 double xSamples[NUMBER_OF_SAMPLES] = { 0.0 };
-
-
-
 
 /* *svg graph building* */
 typedef struct {
@@ -97,8 +92,7 @@ int main( void ) {
 	FILE* fp6 = fopen(fileName, "r");
 	colorSamples(fp6);
 
-	srand((unsigned int)time(NULL));
-
+	srand( (unsigned int)time(NULL) );
 	for (i = 0; i < NUMBER_OF_SAMPLES; i++) {
 		for (int k = 0; k < WINDOWSIZE; k++) {
 			weights[k][i] = rndm(); // Init weights
@@ -108,13 +102,12 @@ int main( void ) {
 	mkFileName(fileName, sizeof(fileName), PURE_WEIGHTS);
 	// save plain test_array before math magic happens
 	FILE *fp0 = fopen(fileName, "w");
-	for (i = 0; i < tracking; i++) {
+	for (i = 0; i < NUMBER_OF_SAMPLES; i++) {
 		for (k = 0; k < WINDOWSIZE; k++) {
 			fprintf(fp0, "[%d][%d]%lf\n", k, i, weights[k][i]);
 		}
 	}
 	fclose(fp0);
-
 
 	// math magic
     localMean(weights);
@@ -135,7 +128,6 @@ int main( void ) {
 	}
 	fclose(fp1);
 */
-	// getchar();
 	printf("\nDONE!\n");
 }
 
@@ -181,11 +173,9 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 
 		for (i = 1; i < _arrayLength; i++) { //get predicted value
 			xPredicted += (local_weights[i][xCount] * (xSamples[xCount - i] - xMean));
-
 		}
 		xPredicted += xMean;
 		xError[xCount] = xActual - xPredicted;
-	//	printf("Pred: %f\t\tActual:%f\n", xPredicted, xActual);
 		points[xCount].xVal[1] = xCount;
 		points[xCount].yVal[1] = xPredicted;
 		points[xCount].xVal[4] = xCount;
@@ -204,9 +194,7 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 			local_weights[i][xCount+1] = local_weights[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xMean) / xSquared);
 		//	printf("NEU::%lf\n", local_weights[i][xCount]);
 		}
-
 		fprintf(fp4, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);
-
 	}
 //	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
 //	printf("vor:%d", xErrorLength);
@@ -227,16 +215,14 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	printf("mean:%lf, devitation:%lf", mean, deviation);
 
 	// write in file
-	mkFileName(fileName, sizeof(fileName), RESULTS);
-	FILE *fp2 = fopen(fileName, "w");
-	fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
-	fclose(fp2);
+	//mkFileName(fileName, sizeof(fileName), RESULTS);
+	//FILE *fp2 = fopen(fileName, "w");
+	fprintf(fp4, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
+	//fclose(fp2);
 	free(local_weights);
 	fclose(fp4);
 
-	weightsLogger( local_weights, USED_WEIGHTS );
-	//mkSvgGraph(points);
-
+	//weightsLogger( local_weights, USED_WEIGHTS );
 }
 
 /*
@@ -298,7 +284,7 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		}
         fprintf(fp3, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);
 	}
-	fclose(fp3);
+
 	double *xErrorPtr = popNAN(xError); // delete NAN values from xError[]
 	//printf("%lf", xErrorPtr[499]);
 	double  xErrorLength = *xErrorPtr; // Watch popNAN()!
@@ -316,14 +302,14 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	printf("mean:%lf, devitation:%lf", mean, deviation);
 
 	// write in file
-	mkFileName(fileName, sizeof(fileName), RESULTS);
-	FILE *fp2 = fopen(fileName, "wa");
-	fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
-	fclose(fp2);
+	//mkFileName(fileName, sizeof(fileName), RESULTS);
+	//FILE *fp2 = fopen(fileName, "wa");
+	fprintf(fp3, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
+	fclose(fp3);
+	//fclose(fp2);
 	free(local_weights);
 
-	weightsLogger( local_weights, USED_WEIGHTS );
-	//mkSvgGraph(points);
+	//weightsLogger( local_weights, USED_WEIGHTS );
 }
 
 
@@ -380,7 +366,7 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		}
         fprintf(fp6, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);
 	}
-    fclose(fp6);
+
 /*	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
 	printf("vor:%d", xErrorLength);
 	popNAN(xError);
@@ -414,17 +400,14 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	printf("mean:%lf, devitation:%lf", mean, deviation);
 
 	// write in file
-	mkFileName(fileName, sizeof(fileName), RESULTS);
-	FILE *fp2 = fopen(fileName, "wa");
-	fprintf(fp2, "quadr. Varianz(x_error): {%f}\nMittelwert:(x_error): {%f}\n\n", deviation, mean);
-	fclose(fp2);
+	//mkFileName(fileName, sizeof(fileName), RESULTS);
+	//FILE *fp2 = fopen(fileName, "wa");
+	fprintf(fp6, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
+	//fclose(fp2);
+	fclose(fp6);
 	free(local_weights);
 
-	weightsLogger( local_weights, USED_WEIGHTS );
-	//mkSvgGraph(points);
-
-
-
+	//weightsLogger( local_weights, USED_WEIGHTS );
 }
 
 
@@ -491,9 +474,19 @@ void weightsLogger (double weights[WINDOWSIZE], int val ) {
 	//	}
 	}
 	fprintf(fp,"\n\n\n\n=====================NEXT=====================\n");
-	//fclose(fp);
+	fclose(fp);
 }
 
+
+/*
+======================================================================================================
+
+bufferLogger
+
+formats output of mkSvgGraph -- Please open graphResults.html to see the output--
+
+======================================================================================================
+*/
 
 void bufferLogger(char *buffer, point_t points[]) {
 	int i;
@@ -560,8 +553,6 @@ double *popNAN(double *xError) {
 	double tmpLength = 0.0;
 	double *tmp = NULL;
 	double *more_tmp = NULL;
-
-//	printf("LENGTH: %d", xErrorLength);
 
 	for ( i = 0; i < NUMBER_OF_SAMPLES; i++ ) {
 		counter ++;
@@ -640,14 +631,12 @@ void mkSvgGraph(point_t points[]) {
 	while (!feof(input)) {
 		fgets(line, 512, input);
 		strncat(buffer, line, strlen(line));
-		//	printf("%s\n", line);
 		if (strstr(line, firstGraph) != NULL) {
 			bufferLogger(buffer, points);
 		}
 
 	}
 	fprintf(target, buffer);
-	//puts(buffer);
 }
 
 
@@ -751,7 +740,7 @@ gets one of the rgb color channels and writes them to a file
 */
 
 int ppmColorChannel(FILE* fp, imagePixel_t *image) {
-	//	int length = 1000; // (image->x * image->y) / 3;
+	//	int length = (image->x * image->y) / 3;
 	int i = 0;
 
 	if (image) {
@@ -790,21 +779,24 @@ void colorSamples(FILE* fp) {
 	fclose(fp);
 }
 
+
+/*
+======================================================================================================
+
+windowXMean
+
+returns mean value of given input, which has a length of WINDOWSIZE
+
+======================================================================================================
+*/
+
 double windowXMean(int _arraylength, int xCount) {
 	double sum = 0.0;
 	double *ptr;
-	// printf("*window\t\t*base\t\txMean\n\n");
-	for (ptr = &xSamples[xCount - _arraylength]; ptr != &xSamples[xCount]; ptr++) { //set ptr to beginning of window
-	//window = xCount - _arraylength
-	//base = window - _arraylength;
-	//sum = 0.0;
-	//for( count = 0; count < _arraylength; count++){
-	sum += *ptr;
-	//	printf("%f\n", *base);
 
-		//}
+	for (ptr = &xSamples[xCount - _arraylength]; ptr != &xSamples[xCount]; ptr++) { //set ptr to beginning of window
+        sum += *ptr;
 	}
-	//printf("\n%lf\t%lf\t%lf\n", *ptr, *ptr2, (sum/(double)WINDOW));
 	return sum / (double)_arraylength;
 }
 
