@@ -129,10 +129,3 @@ und wir uns ggf. austauschen können.
 Mit freundlichen Grüßen
 T.Strutz
 
-
-
-Test:
----
-$$ V=\pi \cdot r^{2} \cdot h $$
-
-:trollface: 
