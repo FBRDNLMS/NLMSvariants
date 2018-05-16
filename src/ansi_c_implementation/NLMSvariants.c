@@ -140,7 +140,7 @@ Variant (1/3), substract local mean.
 
 void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	//double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
-	double (*local_weights)[WINDOWSIZE] = malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
+	double (*local_weights)[WINDOWSIZE] =(double (*)[WINDOWSIZE]) malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
 //	double *local_weights[WINDOWSIZE];
 	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
 	char fileName[50];
@@ -223,7 +223,7 @@ substract direct predecessor
 */
 
 void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
-	double (*local_weights)[WINDOWSIZE] = malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
+	double (*local_weights)[WINDOWSIZE] = (double (*)[WINDOWSIZE]) malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
 
 //	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
 	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES );
@@ -311,7 +311,7 @@ differential predecessor.
 */
 void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 //	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
-	double (*local_weights)[WINDOWSIZE] = malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
+	double (*local_weights)[WINDOWSIZE] = (double (*)[WINDOWSIZE]) malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
 
 	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES );
 	char fileName[512];
