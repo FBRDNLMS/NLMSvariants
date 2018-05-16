@@ -1,7 +1,8 @@
 ## Installation
 
 Use `$ make` or compile it anywhere else.
-This code is ANSI compatible . Nevertheless if you use Visual Studio use the C++ implementation in __../src/cpp_implementation__
+However if you use Visual Studio use the C++ implementation in __../src/cpp_implementation__.
+It's a carbon copy of the *.c file but VS wants to use a *.cpp file.
 
 
 ## Features
@@ -16,3 +17,10 @@ Greyscale PPM files can be used for input at this iteration. Output will be gene
 You can hide graphs by clicking on its name for better visibility. 
 
 Use `$ ./lms -h` for help.
+
+### Usage
+
+coming soon ...
+
+
+This code is ANSI compatible no POSIX, C99, C11 or GNU libs, because it had to be VS compatible . There are way easier methods like getline() or getopt(), I know ...
