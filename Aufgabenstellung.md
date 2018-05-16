@@ -132,4 +132,5 @@ T.Strutz
 
 
 Test:
-$V=\pi \cdot r^{2} \cdot h$
+---
+$$V=\pi \cdot r^{2} \cdot h$$
