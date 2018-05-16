@@ -566,8 +566,9 @@ namespace NMLS_Graphisch
                     if (NumberOfSamples > 2147483591 / 5)
                         NumberOfSamples = 2147483591 / 5;
 
-                    for (int i = 1; i < 6; i++)
-                        comboBox_pixel.Items.Add((int)(NumberOfSamples * 0.2 * i));
+                    /* Add every 10% a number into comboBox_pixel for calculating */
+                    for (int i = 1; i < 11; i++)
+                        comboBox_pixel.Items.Add((int)(NumberOfSamples * 0.1 * i));
 
                     _x = pixel_array;
 
