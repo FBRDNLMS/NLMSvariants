@@ -22,10 +22,8 @@ More information can be found inside the according folders.
 │       Doc.txt
 │
 └───src
-    ├───ansi_c_implementation
-    │       .DS_Store
+    ├───ansi_c_implementation 
     │       graphResults_template.html
-    │       lms.exe
     │       Makefile
     │       NLMSvariants.c
     │       README.md
