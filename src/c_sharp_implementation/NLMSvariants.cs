@@ -19,6 +19,7 @@ namespace NMLS_Graphisch
             InitializeComponent();
         }
 
+
         static int NumberOfSamples = 1000;
         const int tracking = 40;
         static Stack<double> x = new Stack<double>();
@@ -27,17 +28,26 @@ namespace NMLS_Graphisch
         static double[,] w = new double[NumberOfSamples, NumberOfSamples];
         static double learnrate = 0.2;
         static double[] pixel_array;
-        static int windowSize = 5;
+        static int windowSize = 6;
 
-        private void button1_Click(object sender, EventArgs e)
+        /*---------------------------------------------------
+         *  GO_btn_click()
+         *  
+         *  starts the predefined algorithem with the specified parameters
+         * 
+         *---------------------------------------------------*/
+
+        private void GO_btn_Click(object sender, EventArgs e)
         {
 
-            NumberOfSamples = Int32.Parse(comboBox2.SelectedItem.ToString());
-            chart1.ChartAreas[0].AxisX.Maximum = NumberOfSamples;
-            chart1.ChartAreas[0].AxisY.Maximum = 300;
-            chart1.ChartAreas[0].AxisY.Minimum = -5;
+            /* Initializing the chart to display all values */
+            NumberOfSamples = Int32.Parse(comboBox_pixel.SelectedItem.ToString());
+            chart_main.ChartAreas[0].AxisX.Maximum = NumberOfSamples;
+            chart_main.ChartAreas[0].AxisY.Maximum = 300;
+            chart_main.ChartAreas[0].AxisY.Minimum = -100;
 
-            if (checkBox1.Checked)
+            /* If output is checked weights befor and after the algorithem are printed to a file.*/
+            if (checkBox_output.Checked)
             {
                 for (int i = 0; i < tracking; i++)
                 {
@@ -51,19 +61,21 @@ namespace NMLS_Graphisch
             }
 
             Series[] series = new Series[2];
-            switch (comboBox1.SelectedItem.ToString())
+
+            /* Deciding which algorithem is going to be calculated */
+            switch (comboBox_algorithem.SelectedItem.ToString())
             {
 
                 case "lokaler Mittelwert":
-                    series = lokalerMittelWert();
+                    series = localMean();
                     break;
 
                 case "direkter Vorgänger":
-                    series = direkterVorgaenger();
+                    series = directPredecessor();
                     break;
 
                 case "differenzieller Vorgänger":
-                    series = diffVorgaenger();
+                    series = diffPredecessor();
                     break;
 
                 default:
@@ -71,20 +83,22 @@ namespace NMLS_Graphisch
 
             }
 
+            /* Adding the series from the algorithems to the chart */
             foreach (Series s in series)
             {
-                if (chart1.Series.IndexOf(s.Name) < 0)
+                if (chart_main.Series.IndexOf(s.Name) < 0)
                 {
-                    chart1.Series.Add(s);
+                    chart_main.Series.Add(s);
                 }
                 else
                 {
-                    chart1.Series.RemoveAt(chart1.Series.IndexOf(s.Name));
-                    chart1.Series.Add(s);
+                    chart_main.Series.RemoveAt(chart_main.Series.IndexOf(s.Name));
+                    chart_main.Series.Add(s);
                 }
             }
 
-            if (checkBox1.Checked)
+            /* Output weights after algorithem */
+            if (checkBox_output.Checked)
             {
                 for (int i = 0; i < tracking; i++)
                 {
@@ -101,30 +115,49 @@ namespace NMLS_Graphisch
 
         }
 
-        Series[] lokalerMittelWert()
+        /*---------------------------------------------------
+         *  localMean()
+         * 
+         *  the algorithem for the local Mean
+         *  
+         *  returns a array of Series with the error and prediction for
+         *  displaying in a chart
+         * 
+         *---------------------------------------------------*/
+
+        Series[] localMean()
         {
+
             int x_count = 0;
             double[] x_error = new double[NumberOfSamples];
             x_error[0] = 0;
 
-            //Graphischer Stuff
-            Series lokal_M_error = new Series("Lokaler Mittelwert Error");
-            Series lokal_M_predic = new Series("Lokaler Mittelwert Prediction");
-            lokal_M_error.ChartType = SeriesChartType.Spline;
-            lokal_M_predic.ChartType = SeriesChartType.Spline;
+            /* Inizilazing series for the main chart */
+            Series localMeanError = new Series("Lokaler Mittelwert Error");
+            Series localMeanPredict = new Series("Lokaler Mittelwert Prediction");
+            localMeanError.ChartType = SeriesChartType.Spline;
+            localMeanPredict.ChartType = SeriesChartType.Spline;
 
-            while (x_count + 1 < NumberOfSamples)
+            /* Main while loop for the prediction and learing */
+
+            while (x_count < NumberOfSamples - 1)
             {
+
+                /* Initializing a part array of the actual array to capture the last WINDOWSIZE pixels
+                 * for predicting and getting the average of the array*/
+
                 double[] x_part_Array = new double[x_count];
-
                 int _sourceIndex = (x_count > windowSize) ? x_count - windowSize : 0;
-                int _arrayLength = (x_count > windowSize) ? windowSize + 1 : (x_count > 0) ? x_count : 0;
+                int _arrayLength = (x_count > windowSize) ? windowSize : x_count;
+                Array.Copy(_x, _sourceIndex, x_part_Array, 0, _arrayLength);
+                double x_middle = (x_count > 0) ? (x_part_Array.Sum() / _arrayLength) : 0;
 
-                Array.Copy(_x, _sourceIndex, x_part_Array, 0, _arrayLength);                               
-                double x_middle = (x_count > 0) ? ( x_part_Array.Sum() / _arrayLength) : 0;
+
                 double x_pred = 0.0;
                 double[] x_array = _x;
                 double x_actual = _x[x_count + 1];
+
+                /* Prediction algorithem */
 
                 for (int i = 1; i < _arrayLength; i++)
                 {
@@ -132,8 +165,9 @@ namespace NMLS_Graphisch
                 }
                 x_pred += x_middle;
 
-                // Output Stuff
-                if (checkBox1.Checked)
+                /* If output is checked a file is produced with prediction, actual and the error */
+
+                if (checkBox_output.Checked)
                 {
                     File.AppendAllText("lokalerMittelwert.txt",
                    String.Format("{0}. X_pred {1}\n", x_count, x_pred),
@@ -144,80 +178,112 @@ namespace NMLS_Graphisch
                         Encoding.UTF8);
                 }
 
+                /* Calculating the error */
                 x_error[x_count] = x_actual - x_pred;
+
+
                 double x_square = 0;
 
-                //Output Stuff
-                if (checkBox1.Checked)
+                /* Output */
+                if (checkBox_output.Checked)
                 {
                     File.AppendAllText("lokalerMittelwert.txt",
                     String.Format("{0}. X_error {1}\n\n", x_count, x_error[x_count]),
                     Encoding.UTF8);
                 }
 
+                /* Calulating the LMS value */
                 for (int i = 1; i < _arrayLength; i++)
                 {
                     x_square += Math.Pow(x_array[x_count - i] - x_middle, 2);
                 }
 
+                /* x_square == 0.0, drives to undefined weights therefor we set it to 1 */
+
+                if (x_square == 0.0)
+                    x_square = 1.0;
+
+                /* Learning algorithem */
                 for (int i = 1; i < _arrayLength; i++)
                 {
                     w[i, x_count + 1] = w[i, x_count] + learnrate * x_error[x_count] * ((x_array[x_count - i] - x_middle) / x_square);
                 }
 
-                // Graphischer Stuff
-                lokal_M_error.Points.AddXY(x_count, x_error[x_count]);
-                lokal_M_predic.Points.AddXY(x_count, x_pred);
+                /* Printing error and prediction on the series */
+
+                localMeanError.Points.AddXY(x_count, x_error[x_count]);
+                localMeanPredict.Points.AddXY(x_count, x_pred);
 
                 x_count += 1;
             }
+
+            /* Calculating the avearage of the error and the variance of the error */
             double mittel = x_error.Where(d => !double.IsNaN(d)).Sum() / x_error.Length;
             double varianz = 0.0;
             foreach (double x_e in x_error)
             {
-                if(!double.IsNaN(x_e))
+                if (!double.IsNaN(x_e))
                     varianz += Math.Pow(x_e - mittel, 2);
             }
             varianz /= x_error.Length;
-            if (checkBox1.Checked)
+
+            /* Displayes both on labels */
+            label3.Text = mittel.ToString();
+            label5.Text = varianz.ToString();
+
+            /* Output the result */
+            if (checkBox_output.Checked)
             {
                 File.AppendAllText("ergebnisse.txt",
                         String.Format("Quadratische Varianz(x_error): {0}\n Mittelwert(x_error): {1}\n\n", varianz, mittel),
                         Encoding.UTF8);
             }
-            return new Series[] { lokal_M_predic, lokal_M_error };
+
+            return new Series[] { localMeanPredict, localMeanError };
         }
 
-        Series[] direkterVorgaenger()
+        /*---------------------------------------------------
+         *  directPredecessor()
+         * 
+         *  the algorithem for the direct predecessor
+         *  
+         *  returns a array of Series with the error and prediction for
+         *  displaying in a chart
+         * 
+         *---------------------------------------------------*/
+
+        Series[] directPredecessor()
         {
             double[] x_error = new double[NumberOfSamples];
             x_error[0] = 0;
             int x_count = 0;
 
-            // Graphischer Stuff
-            Series direkterVorgaenger_error = new Series("Direkter Vorgänger Error");
-            Series direkterVorgaenger_predic = new Series("Direkter Vorgänger Prediction");
-            direkterVorgaenger_error.ChartType = SeriesChartType.Spline;
-            direkterVorgaenger_predic.ChartType = SeriesChartType.Spline;
+            /* Inizilazing series for the main chart */
+            Series directPredecessorError = new Series("Direkter Vorgänger Error");
+            Series directPredecessorPrediction = new Series("Direkter Vorgänger Prediction");
+            directPredecessorError.ChartType = SeriesChartType.Spline;
+            directPredecessorPrediction.ChartType = SeriesChartType.Spline;
 
-            while (x_count + 1 < NumberOfSamples)
+            /* Main while loop for the prediction and learing */
+            while (x_count < NumberOfSamples - 1)
             {
                 double x_pred = 0.0;
-                double[] x_array = _x;
                 double x_actual = _x[x_count + 1];
 
                 if (x_count > 0)
                 {
-                    int _arrayLength = (x_count > windowSize) ? windowSize + 1 : x_count;
+                    /* Initializing the windowsize */
+                    int _arrayLength = (x_count > windowSize) ? windowSize : x_count;
 
+                    /* Prediction algorithem */
                     for (int i = 1; i < _arrayLength; i++)
                     {
-                        x_pred += (w[i, x_count] * (x_array[x_count - 1] - x_array[x_count - i - 1]));
+                        x_pred += (w[i, x_count] * (_x[x_count - 1] - _x[x_count - i - 1]));
                     }
-                    x_pred += x_array[x_count - 1];
+                    x_pred += _x[x_count - 1];
 
-                    // Output Stuff
-                    if (checkBox1.Checked)
+                    /* If output is checked a file is produced with prediction, actual and the error */
+                    if (checkBox_output.Checked)
                     {
                         File.AppendAllText("direkterVorgaenger.txt",
                        String.Format("{0}. X_pred {1}\n", x_count, x_pred),
@@ -228,11 +294,11 @@ namespace NMLS_Graphisch
                             Encoding.UTF8);
                     }
 
-
+                    /* Calculating the error */
                     x_error[x_count] = x_actual - x_pred;
 
-                    // Output Stuff
-                    if (checkBox1.Checked)
+                    /* Output */
+                    if (checkBox_output.Checked)
                     {
                         File.AppendAllText("direkterVorgaenger.txt",
                         String.Format("{0}. X_error {1}\n\n", x_count, x_error[x_count]),
@@ -240,23 +306,34 @@ namespace NMLS_Graphisch
                     }
 
                     double x_square = 0;
+
+                    /* Calulating the LMS value */
                     for (int i = 1; i < _arrayLength; i++)
                     {
-                        x_square += Math.Pow(x_array[x_count - 1] - x_array[x_count - i - 1], 2);
+                        x_square += Math.Pow(_x[x_count - 1] - _x[x_count - i - 1], 2);
                     }
 
+                    /* x_square == 0.0, drives to undefined weights therefor we set it to 1 */
+                    if (x_square == 0.0)
+                    {
+                        x_square = 1;
+                    }
+
+                    /* Learning algorithem */
                     for (int i = 1; i < _arrayLength; i++)
                     {
-                        w[i, x_count + 1] = w[i, x_count] + learnrate * x_error[x_count] * ((x_array[x_count - 1] - x_array[x_count - i - 1]) / x_square);
+                        w[i, x_count + 1] = w[i, x_count] + learnrate * x_error[x_count] * ((_x[x_count - 1] - _x[x_count - i - 1]) / x_square);
                     }
                 }
 
-                //Graphischer Stuff
-                direkterVorgaenger_error.Points.AddXY(x_count, x_error[x_count]);
-                direkterVorgaenger_predic.Points.AddXY(x_count, x_pred);
+                /* Printing error and prediction on the series */
+                directPredecessorError.Points.AddXY(x_count, x_error[x_count]);
+                directPredecessorPrediction.Points.AddXY(x_count, x_pred);
 
                 x_count += 1;
             }
+
+            /* Calculating the avearage of the error and the variance of the error */
             double mittel = x_error.Where(d => !double.IsNaN(d)).Sum() / x_error.Length;
             double varianz = 0.0;
             foreach (double x_e in x_error)
@@ -265,45 +342,64 @@ namespace NMLS_Graphisch
                     varianz += Math.Pow(x_e - mittel, 2);
             }
             varianz /= x_error.Length;
-            if (checkBox1.Checked)
+
+            /* Displayes both on labels */
+            label3.Text = mittel.ToString();
+            label5.Text = varianz.ToString();
+
+            /* Output the result */
+            if (checkBox_output.Checked)
             {
                 File.AppendAllText("ergebnisse.txt",
                         String.Format("Quadratische Varianz(x_error): {0}\n Mittelwert(x_error): {1}\n\n", varianz, mittel),
                         Encoding.UTF8);
             }
 
-            return new Series[] { direkterVorgaenger_error, direkterVorgaenger_predic };
+            return new Series[] { directPredecessorError, directPredecessorPrediction };
         }
 
-        Series[] diffVorgaenger()
+        /*---------------------------------------------------
+         *  diffPredecessor()
+         * 
+         *  the algorithem for the differential predecessor
+         *  
+         *  returns a array of Series with the error and prediction for
+         *  displaying in a chart
+         * 
+         *---------------------------------------------------*/
+
+        Series[] diffPredecessor()
         {
             double[] x_error = new double[NumberOfSamples];
             x_error[0] = 0;
-            int x_count = 1;
+            int x_count = 0;
 
-            //Graphischer Stuff
-            Series diffVorgaenger_error = new Series("Differenzieller Vorgänger Error");
-            Series diffVorgaenger_predic = new Series("Differenzieller Vorgänger Prediction");
-            diffVorgaenger_error.ChartType = SeriesChartType.Spline;
-            diffVorgaenger_predic.ChartType = SeriesChartType.Spline;
+            /* Inizilazing series for the main chart */
+            Series diffPredecessorError = new Series("Differenzieller Vorgänger Error");
+            Series diffPredecessorPrediction = new Series("Differenzieller Vorgänger Prediction");
+            diffPredecessorError.ChartType = SeriesChartType.Spline;
+            diffPredecessorPrediction.ChartType = SeriesChartType.Spline;
 
-            while (x_count + 1 < NumberOfSamples)
+            /* Main while loop for the prediction and learing */
+            while (x_count < NumberOfSamples - 1)
             {
                 double x_pred = 0.0;
-                double[] x_array = _x;
                 double x_actual = _x[x_count + 1];
                 if (x_count > 0)
                 {
-                    int _arrayLength = (x_count > windowSize) ? windowSize + 1 : x_count;
 
+                    /* Initializing the windowsize */
+                    int _arrayLength = (x_count > windowSize) ? windowSize : x_count;
+
+                    /* Prediction algorithem */
                     for (int i = 1; i < _arrayLength; i++)
                     {
-                        x_pred += (w[i, x_count] * (x_array[x_count - i] - x_array[x_count - i - 1]));
+                        x_pred += (w[i, x_count] * (_x[x_count - i] - _x[x_count - i - 1]));
                     }
-                    x_pred += x_array[x_count - 1];
+                    x_pred += _x[x_count - 1];
 
-                    // Output Stuff
-                    if (checkBox1.Checked)
+                    /* If output is checked a file is produced with prediction, actual and the error */
+                    if (checkBox_output.Checked)
                     {
                         File.AppendAllText("differenziellerVorgaenger.txt",
                        String.Format("{0}. X_pred {1}\n", x_count, x_pred),
@@ -314,11 +410,11 @@ namespace NMLS_Graphisch
                             Encoding.UTF8);
                     }
 
-
+                    /* Calculating the error */
                     x_error[x_count] = x_actual - x_pred;
 
-                    // Output Stuff
-                    if (checkBox1.Checked)
+                    /* Output */
+                    if (checkBox_output.Checked)
                     {
                         File.AppendAllText("differenziellerVorgaenger.txt",
                         String.Format("{0}. X_error {1}\n\n", x_count, x_error[x_count]),
@@ -327,24 +423,35 @@ namespace NMLS_Graphisch
 
 
                     double x_square = 0;
+
+                    /* Calulating the LMS value */
                     for (int i = 1; i < _arrayLength; i++)
                     {
-                        x_square += Math.Pow(x_array[x_count - i] - x_array[x_count - i - 1], 2);
+                        x_square += Math.Pow(_x[x_count - i] - _x[x_count - i - 1], 2);
                     }
 
+                    /* x_square == 0.0, drives to undefined weights therefor we set it to 1 */
+                    if (x_square == 0.0)
+                    {
+                        x_square = 1;
+                    }
+
+                    /* Learning algorithem */
                     for (int i = 1; i < _arrayLength; i++)
                     {
-                        w[i, x_count + 1] = w[i, x_count] + learnrate * x_error[x_count] * ((x_array[x_count - i] - x_array[x_count - i - 1]) / x_square);
+                        w[i, x_count + 1] = w[i, x_count] + learnrate * x_error[x_count] * ((_x[x_count - i] - _x[x_count - i - 1]) / x_square);
                     }
 
                 }
 
-                //Graphischer Stuff
-                diffVorgaenger_error.Points.AddXY(x_count, x_error[x_count]);
-                diffVorgaenger_predic.Points.AddXY(x_count, x_pred);
+                /* Printing error and prediction on the series */
+                diffPredecessorError.Points.AddXY(x_count, x_error[x_count]);
+                diffPredecessorPrediction.Points.AddXY(x_count, x_pred);
 
                 x_count += 1;
             }
+
+            /* Calculating the avearage of the error and the variance of the error */
             double mittel = x_error.Where(d => !double.IsNaN(d)).Sum() / x_error.Length;
             double varianz = 0.0;
             foreach (double x_e in x_error)
@@ -354,60 +461,88 @@ namespace NMLS_Graphisch
             }
             varianz /= x_error.Length;
 
-            if (checkBox1.Checked)
+            /* Displayes both on labels */
+            label3.Text = mittel.ToString();
+            label5.Text = varianz.ToString();
+
+            /* Output the result */
+            if (checkBox_output.Checked)
             {
                 File.AppendAllText("ergebnisse.txt",
                         String.Format("Quadratische Varianz(x_error): {0}\n Mittelwert(x_error): {1}\n\n", varianz, mittel),
                         Encoding.UTF8);
             }
 
-            return new Series[] { diffVorgaenger_error, diffVorgaenger_predic };
+            return new Series[] { diffPredecessorError, diffPredecessorPrediction };
         }
 
-        // Inizialisierung von Arrays
+        /*---------------------------------------------------
+        *  Form1_Load()
+        * 
+        *  loads the form and initializes some variables
+        * 
+        *---------------------------------------------------*/
         private void Form1_Load(object sender, EventArgs e)
         {
-            comboBox1.SelectedIndex = 0;
-            comboBox2.SelectedIndex = 0;
-            chart1.Series.Clear();
+            comboBox_algorithem.SelectedIndex = 0;
+            comboBox_pixel.SelectedIndex = 0;
+            chart_main.Series.Clear();
             Series x_actual = new Series("Actual x Value");
             x_actual.ChartType = SeriesChartType.Spline;
+
+            /*  Initializing weights and actual values
+                In case no picture is loaded, actual values are generated
+                And printing them on a chart */
             for (int i = 0; i < NumberOfSamples; i++)
             {
                 _x[i] += ((255.0 / NumberOfSamples) * i);
                 for (int k = 0; k < windowSize; k++)
                 {
                     w[k, i] = rnd.NextDouble();
-                    //Console.WriteLine(String.Format("Weight[{0}, {1}]: {2}",k,i, w[k, i]));
                 }
                 x_actual.Points.AddXY(i, _x[i]);
             }
-            chart1.Series.Add(x_actual);
+            chart_main.Series.Add(x_actual);
         }
 
-        // Graphen Clearen
-        private void button2_Click(object sender, EventArgs e)
+        /*---------------------------------------------------
+        *  Clear_btn_Click()
+        * 
+        *  clears the chart and reprints the actual values
+        * 
+        *---------------------------------------------------*/
+
+        private void Clear_btn_Click(object sender, EventArgs e)
         {
-            chart1.Series.Clear();
+            chart_main.Series.Clear();
             Series x_actual = new Series("Actual x Value");
             x_actual.ChartType = SeriesChartType.Spline;
-            for (int i = 0; i < NumberOfSamples; i++)
+            for (int i = 0; i < Int32.Parse(comboBox_pixel.SelectedItem.ToString()); i++)
             {
                 x_actual.Points.AddXY(i, _x[i]);
             }
-            chart1.Series.Add(x_actual);
+            chart_main.Series.Add(x_actual);
         }
 
-        // Bild Laden
-        private void button3_Click(object sender, EventArgs e)
+        /*---------------------------------------------------
+        *  Load_btn_Click()
+        * 
+        *  loads a image from a file and stores all pixels in an array
+        * 
+        *---------------------------------------------------*/
+
+        private void Load_btn_Click(object sender, EventArgs e)
         {
+
 
             OpenFileDialog openFileDialog = new OpenFileDialog();
 
-            if(openFileDialog.ShowDialog() == DialogResult.OK)
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
+                /* Catch a exception if any is raised */
                 try
                 {
+                    /* Loads file into a bitmap */
                     Bitmap img = new Bitmap(openFileDialog.FileName);
                     pixel_array = new double[img.Width * img.Height];
 
@@ -417,23 +552,41 @@ namespace NMLS_Graphisch
                         {
 
                             Color pixel = img.GetPixel(i, j);
-                            pixel_array[j*i] = pixel.R;
+                            pixel_array[j * i] = pixel.R;
 
                         }
                     }
+
+                    /* If NuberOfSamples is greater then 2147483591 its size is over
+                     * the limit of C# possible indexes in an array, so we have to decrease
+                     * the size of NumberOfSamples */
+
                     NumberOfSamples = (img.Width * img.Height) / 2;
-                    comboBox2.Items.Add(NumberOfSamples);
+
+                    if (NumberOfSamples > 2147483591 / 5)
+                        NumberOfSamples = 2147483591 / 5;
+
+                    for (int i = 1; i < 6; i++)
+                        comboBox_pixel.Items.Add((int)(NumberOfSamples * 0.2 * i));
+
                     _x = pixel_array;
-                    w = new double[NumberOfSamples, NumberOfSamples];
+
+                    /* Recreating the weights with the new size of NumberOfSamples */
+
+                    w = new double[windowSize, NumberOfSamples];
                     for (int i = 0; i < NumberOfSamples; i++)
                     {
-                        for (int k = 1; k < NumberOfSamples; k++)
+                        for (int k = 0; k < windowSize; k++)
                         {
                             w[k, i] = rnd.NextDouble();
                         }
                     }
+
+                    /* Clearing the screen after loading the pixels to make the new graph occure */
+                    Clear_btn_Click(new object(), new EventArgs());
+
                 }
-                catch(Exception exep)
+                catch (Exception exep)
                 {
                     MessageBox.Show("Konnte Bild nicht laden.");
                     MessageBox.Show(String.Format("{0}", exep.ToString()));
