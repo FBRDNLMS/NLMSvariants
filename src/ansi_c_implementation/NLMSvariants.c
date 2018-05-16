@@ -2,7 +2,7 @@
 //
 //  NLMSvariants.c
 //
-//  Created by FBRDNLMS on 26.04.18.
+//  Created by Stefan Friese on 26.04.18.
 //
 //
 #include <stdio.h>
@@ -12,7 +12,7 @@
 #include <string.h>
 #include <float.h> // DBL_MAX
 
-#define NUMBER_OF_SAMPLES 500
+#define NUMBER_OF_SAMPLES 50
 #define WINDOWSIZE 5
 #define learnrate 0.8
 #define RGB_COLOR 255
@@ -53,7 +53,7 @@ typedef struct {
 
 static imagePixel_t * rdPPM(char *fileName); // read PPM file format
 void mkPpmFile(char *fileName, imagePixel_t *image); // writes PPM file
-int ppmColorChannel(FILE* fp, imagePixel_t *image); // writes colorChannel from PPM file to log file
+int ppmColorChannel(FILE* fp, imagePixel_t *image, char *colorChannel); // writes colorChannel from PPM file to log file
 void colorSamples(FILE* fp); // stores color channel values in xSamples[]
 
 /* *file handling* */
@@ -66,64 +66,103 @@ void mkSvgGraph(point_t points[]);
 double r2(void);
 double rndm(void);
 
+/* *args parser* */
+void usage ( void ); 
+
 /* *math* */
 double sum_array(double x[], int length);
 void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
 void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
 void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
 //void differentialPredecessor(double *weights);
-double *popNAN(double *xError); //return new array without NAN values
-double windowXMean(int _arraylength, int xCount);
+double *popNAN(double *xError); // Returns array without NAN values, if any exist
+double windowXMean(int _arraylength, int xCount);// returns mean value of given window
 
 
-//int main(int argc, char **argv) {
-int main( void ) {
-    double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]; // = { { 0.0 }, {0.0} };
-//	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
-	char fileName[50];
+int main( int argc, char **argv ) {
+	char *colorChannel = (char *) malloc(sizeof(char)* 32);  
+	char *inputfile = (char *)malloc(sizeof(char) * 32);
+	unsigned int *seed = NULL;
 	int i,k, xLength;
-	imagePixel_t *image;
-
-	image = rdPPM("cow.ppm");
+	unsigned int windowSize = 5;
+	char *stdcolor = "green";
+	colorChannel = stdcolor;
+	unsigned int uint_buffer[1];
+	
+	while( (argc > 1) && (argv[1][0] == '-')  ) {	// Parses parameters from stdin
+			switch( argv[1][1] ) {
+				case 'i':
+					inputfile = &argv[1][3];
+					++argv;
+					--argc;
+					break;
+				case 'w':
+					sscanf(&argv[1][3], "%u", &windowSize);	
+					++argv;
+					--argc;
+					break;
+				case 'c':	
+					colorChannel = &argv[1][3];	
+					++argv;
+					--argc;
+					break;
+				case 's':	
+					sscanf(&argv[1][3], "%u", uint_buffer);
+					seed = &uint_buffer[0];
+					++argv;
+					--argc;
+					break;
+				case 'h':
+					printf("Program name: %s\n", argv[0]);
+					usage();
+					break;
+				default:
+					printf("Wrong Arguments: %s\n", argv[1]);
+					usage();		
+			}
+		
+		++argv;
+		--argc;
+	}
+	imagePixel_t *image;	
+	double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]; // = { { 0.0 }, {0.0} };
+	char fileName[50];
+	image = rdPPM(inputfile);
 	mkFileName(fileName, sizeof(fileName), TEST_VALUES);
 	FILE* fp5 = fopen(fileName, "w");
-	xLength = ppmColorChannel(fp5, image);
+	xLength = ppmColorChannel(fp5, image, colorChannel); // Returns length of ppm input values
 	printf("%d\n", xLength);
 	FILE* fp6 = fopen(fileName, "r");
 	colorSamples(fp6);
 
-	srand( (unsigned int)time(NULL) );
+	if ( (seed != NULL) && (seed >= 0) ){ 
+		srand( *seed );					// Seed for random number generating
+		printf("srand is reproducable : %s");
+	} else {
+		srand( (unsigned int)time(NULL) );
+		printf("srand from time");			// Default seed is time(NULL)
+	}
 	for (i = 0; i < NUMBER_OF_SAMPLES; i++) {
 		for (int k = 0; k < WINDOWSIZE; k++) {
-			weights[k][i] = rndm(); // Init weights
+			weights[k][i] = rndm(); 		// Init random weights
+			printf("%lf\n", weights[k][i]);
 		}
 	}
 	mkFileName(fileName, sizeof(fileName), PURE_WEIGHTS);
-	// save plain test_array before math magic happens
 	FILE *fp0 = fopen(fileName, "w");
 	for (i = 0; i < NUMBER_OF_SAMPLES; i++) {
 		for (k = 0; k < WINDOWSIZE; k++) {
-			fprintf(fp0, "[%d][%d]%lf\n", k, i, weights[k][i]);
+			fprintf(fp0, "[%d][%d]%lf\n", k, i, weights[k][i]);	// Save generated weights to to file
 		}
 	}
 	fclose(fp0);
+
 	// math magic
-    localMean(weights);
+    	localMean(weights);
 	directPredecessor(weights);
 	differentialPredecessor(weights);
+	
 	mkSvgGraph(points);
-	// save test_array after math magic happened
-	// memset( fileName, '\0', sizeof(fileName) );
-/*	mkFileName(fileName, sizeof(fileName), USED_WEIGHTS);
-	FILE *fp1 = fopen(fileName, "w");
-	for (i = 0; i < tracking; i++) {
-		for (int k = 0; k < WINDOWSIZE; k++) {
-			fprintf(fp1, "[%d][%d] %lf\n", k, i, w[k][i]);
-		}
-
-	}
-	fclose(fp1);
-*/
 	printf("\nDONE!\n");
 }
 
@@ -139,9 +178,7 @@ Variant (1/3), substract local mean.
 */
 
 void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
-	//double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
 	double (*local_weights)[WINDOWSIZE] =(double (*)[WINDOWSIZE]) malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
-//	double *local_weights[WINDOWSIZE];
 	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
 	char fileName[50];
 	double xError[2048]; // includes e(n)
@@ -188,8 +225,8 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	}
 	double *xErrorPtr = popNAN(xError); // delete NAN values from xError[]
 	double  xErrorLength = *xErrorPtr; // Watch popNAN()!
-    xErrorPtr[0] = 0.0;
-	printf("Xerrorl:%lf", xErrorLength);
+  	xErrorPtr[0] = 0.0;
+//	printf("Xerrorl:%lf", xErrorLength);
 	double mean = sum_array(xErrorPtr, xErrorLength) / xErrorLength;
 	double deviation = 0.0;
 
@@ -225,7 +262,6 @@ substract direct predecessor
 void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	double (*local_weights)[WINDOWSIZE] = (double (*)[WINDOWSIZE]) malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
 
-//	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
 	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES );
 	char fileName[512];
 	double xError[2048];
@@ -239,29 +275,21 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 
 
 	for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
-		//double xPartArray[1000]; //includes all values at the size of runtime var
-								   //int _sourceIndex = (xCount > WINDOWSIZE) ? xCount - WINDOWSIZE : xCount;
 		int _arrayLength = (xCount > WINDOWSIZE) ? WINDOWSIZE + 1 : xCount;
-		//printf("xCount:%d, length:%d\n", xCount, _arrayLength);
-		// printf("WINDOWSIZE:%f\n", windowXMean(_arrayLength, xCount));
 		xPredicted = 0.0;
 		xActual = xSamples[xCount + 1];
-		//	weightedSum += _x[ xCount-1 ] * w[xCount][0];
-
 		for (i = 1; i < _arrayLength; i++) {
 			xPredicted += (local_weights[i][xCount] * (xSamples[xCount - 1] - xSamples[xCount - i - 1]));
 		}
 		xPredicted += xSamples[xCount - 1];
 		xError[xCount] = xActual - xPredicted;
 
-		//fprintf(fp3, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
-		points[xCount].xVal[2] = xCount;
+		points[xCount].xVal[2] = xCount; 		// Fill point_t array for graph building
 		points[xCount].yVal[2] = xPredicted;
 		points[xCount].xVal[5] = xCount;
 		points[xCount].yVal[5] = xError[xCount];
 
 		double xSquared = 0.0;
-
 		for (i = 1; i < _arrayLength; i++) {
 			xSquared += pow(xSamples[xCount - 1] - xSamples[xCount - i - 1], 2); // substract direct predecessor
 		}
@@ -275,7 +303,7 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	//printf("%lf", xErrorPtr[499]);
 	double  xErrorLength = *xErrorPtr; // Watch popNAN()!
     xErrorPtr[0] = 0.0;
-	printf("Xerrorl:%lf", xErrorLength);
+	//printf("Xerrorl:%lf", xErrorLength);
 
 	double mean = sum_array(xErrorPtr, xErrorLength) / xErrorLength;
 	double deviation = 0.0;
@@ -310,9 +338,7 @@ differential predecessor.
 ======================================================================================================
 */
 void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
-//	double local_weights[WINDOWSIZE][NUMBER_OF_SAMPLES];
 	double (*local_weights)[WINDOWSIZE] = (double (*)[WINDOWSIZE]) malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
-
 	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES );
 	char fileName[512];
 	double xError[2048];
@@ -337,7 +363,6 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		xPredicted += xSamples[xCount - 1];
 		xError[xCount] = xActual - xPredicted;
 
-		//fprintf(fp6, "{%d}.\txPredicted{%f}\txActual{%f}\txError{%f}\n", xCount, xPredicted, xActual, xError[xCount]);
 		points[xCount].xVal[3] = xCount;
 		points[xCount].yVal[3] = xPredicted;
 		points[xCount].xVal[6] = xCount;
@@ -350,30 +375,14 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 		for (i = 1; i < _arrayLength; i++) {
 			local_weights[i][xCount+1] = local_weights[i][xCount] + learnrate * xError[xCount] * ((xSamples[xCount - i] - xSamples[xCount - i - 1]) / xSquared);
 		}
-        fprintf(fp6, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);
+       		fprintf(fp6, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]); // Write to logfile
 	}
 
-/*	int xErrorLength = sizeof(xError) / sizeof(xError[0]);
-	printf("vor:%d", xErrorLength);
-	popNAN(xError);
-	printf("nach:%d", xErrorLength);
-	xErrorLength = sizeof(xError) / sizeof(xError[0]);
-	double mean = sum_array(xError, xErrorLength) / xErrorLength;
-	double deviation = 0.0;
-
-	for (i = 0; i < xErrorLength - 1; i++) {
-		deviation += pow(xError[i] - mean, 2);
-	}
-	deviation /= xErrorLength;
-
-	//mkSvgGraph(points);
-	fprintf(fp6, "{%d}.\tLeast Mean Squared{%f}\tMean{%f}\n\n", xCount, deviation, mean);
-*/
 	double *xErrorPtr = popNAN(xError); // delete NAN values from xError[]
 	//printf("%lf", xErrorPtr[499]);
 	double  xErrorLength = *xErrorPtr; // Watch popNAN()!
-    xErrorPtr[0] = 0.0;
-	printf("Xerrorl:%lf", xErrorLength);
+    	xErrorPtr[0] = 0.0;
+//	printf("Xerrorl:%lf", xErrorLength);
 
 	double mean = sum_array(xErrorPtr, xErrorLength) / xErrorLength;
 	double deviation = 0.0;
@@ -546,7 +555,7 @@ double *popNAN(double *xError) {
 			if ( !isnan(xError[i]) ) {
 				tmp = more_tmp;
 				tmp[counter - 1] = xError[i];
-				printf("xERROR:%lf\n", tmp[counter - 1]);
+				//printf("xERROR:%lf\n", tmp[counter - 1]);
 				tmpLength++;
 			}
 	}
@@ -725,13 +734,32 @@ gets one of the rgb color channels and writes them to a file
 ======================================================================================================
 */
 
-int ppmColorChannel(FILE* fp, imagePixel_t *image) {
-	//	int length = (image->x * image->y) / 3;
+int ppmColorChannel(FILE* fp, imagePixel_t *image, char *colorChannel) {
+	// int length = (image->x * image->y) / 3;
 	int i = 0;
 
+	printf("colorChannel in Function: %s", colorChannel);
 	if (image) {
-		for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++) {
-			fprintf(fp, "%d\n", image->data[i].green);
+	
+		if (strcmp(colorChannel, "green") == 0){
+			for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++) {
+				fprintf(fp, "%d\n", image->data[i].green);
+				printf("|");
+			}
+		} else if (strcmp(colorChannel, "red") == 0){				
+			for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++) {
+				fprintf(fp, "%d\n", image->data[i].red);
+				printf(".");
+			}	
+			
+		} else if (strcmp(colorChannel, "blue") == 0 ) {
+			for (i = 0; i < NUMBER_OF_SAMPLES - 1; i++ ) {
+				fprintf(fp, "%d\n", image->data[i].blue);
+				printf("/");
+			}
+		} else { 
+			printf("Colorchannels are red, green and blue. Pick one of them!");
+			exit(EXIT_FAILURE);
 		}
 	}
 	fclose(fp);
@@ -744,7 +772,7 @@ int ppmColorChannel(FILE* fp, imagePixel_t *image) {
 
 colorSamples
 
-reads colorChannel values from file and stores them in xSamples as well as points datatype for
+reads colorChannel values from file and stores them in xSamples as well as in points datatype for
 creating the SVG graph
 
 ======================================================================================================
@@ -787,3 +815,25 @@ double windowXMean(int _arraylength, int xCount) {
 }
 
 
+/*
+======================================================================================================
+
+ usage 
+ 
+ used in conjunction with the args parser. Returns help section of "-h"
+
+======================================================================================================
+*/
+
+void usage ( void ) {
+	printf("Usage: lms [POSIX style options] -i file ...\n");
+	printf("POSIX options:\n");
+	printf("\t-h\t\t\tDisplay this information.\n");
+	printf("\t-i <filename>\t\tName of inputfile. Must be PPM image.\n");
+	printf("\t-c <color>\t\tUse this color channel from inputfile.\n");
+	printf("\t-w <digit>\t\tCount of used weights (windowSize).\n");
+	printf("\t-s <digit>\t\tDigit for random seed generator.\n\t\t\t\tSame Digits produce same random values. Default is srand by time.");
+	printf("\n\n");
+	printf("lms compares prediction methods of least mean square methods.\nBy default it reads ppm file format and return logfiles as well\nas an svg graphs as an output of said least mean square methods.\n\nExample:\n\tlms -i myimage.ppm -w 3 -c green -s 5\n"); 
+	exit(8);
+}
