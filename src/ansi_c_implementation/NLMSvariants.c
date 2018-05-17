@@ -78,7 +78,6 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
 double *popNAN(double *xError); // Returns array without NAN values, if any exist
 double windowXMean(int _arraylength, int xCount);// returns mean value of given window
 
-
 int main( int argc, char **argv ) {
 	char *colorChannel = (char *) malloc(sizeof(char)* 32);  
 	char *inputfile = (char *)malloc(sizeof(char) * 32);
@@ -166,7 +165,6 @@ int main( int argc, char **argv ) {
 	printf("\nDONE!\n");
 }
 
-
 /*
 ======================================================================================================
 
@@ -176,7 +174,6 @@ Variant (1/3), substract local mean.
 
 ======================================================================================================
 */
-
 void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	double (*local_weights)[WINDOWSIZE] =(double (*)[WINDOWSIZE]) malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
 	memcpy(local_weights, weights, sizeof(double) * WINDOWSIZE * NUMBER_OF_SAMPLES);
@@ -186,7 +183,7 @@ void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	int xCount = 0, i; // runtime var;
 	mkFileName(fileName, sizeof(fileName), LOCAL_MEAN);
 	FILE* fp4 = fopen(fileName, "w");
-	fprintf(fp4, "\n=====================================LocalMean=====================================\nNo.\txPredicted\txActual\t\txError\n");
+	fprintf(fp4, "\n===================================== LocalMean =====================================\nNo.\txPredicted\txActual\t\txError\n");
 
 	double xMean = xSamples[0];
 	double xSquared = 0.0;
@@ -258,7 +255,6 @@ substract direct predecessor
 
 ======================================================================================================
 */
-
 void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	double (*local_weights)[WINDOWSIZE] = (double (*)[WINDOWSIZE]) malloc(sizeof(double) * (WINDOWSIZE+1) * (NUMBER_OF_SAMPLES+1));
 
@@ -325,7 +321,6 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 
 	//weightsLogger( local_weights, USED_WEIGHTS );
 }
-
 
 /*
 ======================================================================================================
@@ -405,7 +400,6 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	//weightsLogger( local_weights, USED_WEIGHTS );
 }
 
-
 /*
 ======================================================================================================
 
@@ -416,9 +410,7 @@ into the given buffer. If the total length is longer than max_len,
 only max_len characters will be written.
 
 ======================================================================================================
-
 */
-
 char *mkFileName(char* buffer, size_t max_len, int suffixId) {
 	const char * format_str = "%Y-%m-%d_%H_%M_%S";
 	size_t date_len;
@@ -431,7 +423,6 @@ char *mkFileName(char* buffer, size_t max_len, int suffixId) {
 	return buffer;
 }
 
-
 /*
 ======================================================================================================
 
@@ -441,12 +432,10 @@ Contains and returns every suffix for all existing filenames
 
 ======================================================================================================
 */
-
 char * fileSuffix(int id) {
 	char * suffix[] = { "_weights_pure.txt", "_weights_used.txt", "_direct_predecessor.txt", "_ergebnisse.txt", "_localMean.txt","_testvalues.txt", "_differential_predecessor.txt" };
 	return suffix[id];
 }
-
 
 /*
 ======================================================================================================
@@ -457,7 +446,6 @@ Logs x,y points to svg graph
 
 ======================================================================================================
 */
-
 void weightsLogger (double weights[WINDOWSIZE], int val ) {
 	char fileName[512];
 	int i;
@@ -472,7 +460,6 @@ void weightsLogger (double weights[WINDOWSIZE], int val ) {
 	fclose(fp);
 }
 
-
 /*
 ======================================================================================================
 
@@ -482,7 +469,6 @@ formats output of mkSvgGraph -- Please open graphResults.html to see the output-
 
 ======================================================================================================
 */
-
 void bufferLogger(char *buffer, point_t points[]) {
 	int i;
 	char _buffer[512] = "";
@@ -509,7 +495,6 @@ void bufferLogger(char *buffer, point_t points[]) {
 	strcat(buffer, "\" fill=\"none\" id=\"svg_4\" stroke=\"red\" stroke-width=\"0.4px\"/>\n");
 }
 
-
 /*
 ======================================================================================================
 
@@ -519,7 +504,6 @@ Sum of all elements in x within a defined length
 
 ======================================================================================================
 */
-
 double sum_array(double x[], int xlength) {
 	int i = 0;
 	double sum = 0.0;
@@ -532,7 +516,6 @@ double sum_array(double x[], int xlength) {
 	return sum;
 }
 
-
 /*
 ======================================================================================================
 
@@ -542,7 +525,6 @@ returns length of new array without NAN values
 
 ======================================================================================================
 */
-
 double *popNAN(double *xError) {
 	int i, counter = 1;
 	double tmpLength = 0.0;
@@ -569,6 +551,7 @@ double *popNAN(double *xError) {
 	return tmp;
 
 }
+
 /*
 ======================================================================================================
 
@@ -578,11 +561,9 @@ returns a random double value between 0 and 1
 
 ======================================================================================================
 */
-
 double r2(void) {
 	return((rand() % 10000) / 10000.0);
 }
-
 
 /*
 ======================================================================================================
@@ -593,12 +574,10 @@ fills a double variable with random value and returns it
 
 ======================================================================================================
 */
-
 double rndm(void) {
 	double rndmval = r2();
 	return rndmval;
 }
-
 
 /*
 ======================================================================================================
@@ -609,7 +588,6 @@ parses template.svg and writes results in said template
 
 ======================================================================================================
 */
-
 void mkSvgGraph(point_t points[]) {
 	FILE *input = fopen("graphResults_template.html", "r");
 	FILE *target = fopen("graphResults.html", "w");
@@ -634,7 +612,6 @@ void mkSvgGraph(point_t points[]) {
 	fprintf(target, buffer);
 }
 
-
 /*
 ======================================================================================================
 
@@ -645,7 +622,6 @@ size of given picture
 
 ======================================================================================================
 */
-
 static imagePixel_t *rdPPM(char *fileName) {
 	char buffer[16];
 	imagePixel_t *image;
@@ -698,7 +674,6 @@ static imagePixel_t *rdPPM(char *fileName) {
 	return image;
 }
 
-
 /*
 ======================================================================================================
 
@@ -709,7 +684,6 @@ carbon copy of the source image. Build for debugging
 
 ======================================================================================================
 */
-
 void mkPpmFile(char *fileName, imagePixel_t *image) {
 	FILE* fp = fopen(fileName, "wb");
 	if (!fp) {
@@ -723,7 +697,6 @@ void mkPpmFile(char *fileName, imagePixel_t *image) {
 	fclose(fp);
 }
 
-
 /*
 ======================================================================================================
 
@@ -733,7 +706,6 @@ gets one of the rgb color channels and writes them to a file
 
 ======================================================================================================
 */
-
 int ppmColorChannel(FILE* fp, imagePixel_t *image, char *colorChannel) {
 	// int length = (image->x * image->y) / 3;
 	int i = 0;
@@ -766,7 +738,6 @@ int ppmColorChannel(FILE* fp, imagePixel_t *image, char *colorChannel) {
 	return NUMBER_OF_SAMPLES;
 }
 
-
 /*
 ======================================================================================================
 
@@ -793,7 +764,6 @@ void colorSamples(FILE* fp) {
 	fclose(fp);
 }
 
-
 /*
 ======================================================================================================
 
@@ -803,7 +773,6 @@ returns mean value of given input, which has a length of WINDOWSIZE
 
 ======================================================================================================
 */
-
 double windowXMean(int _arraylength, int xCount) {
 	double sum = 0.0;
 	double *ptr;
@@ -814,7 +783,6 @@ double windowXMean(int _arraylength, int xCount) {
 	return sum / (double)_arraylength;
 }
 
-
 /*
 ======================================================================================================
 
@@ -824,7 +792,6 @@ double windowXMean(int _arraylength, int xCount) {
 
 ======================================================================================================
 */
-
 void usage ( void ) {
 	printf("Usage: lms [POSIX style options] -i file ...\n");
 	printf("POSIX options:\n");
