@@ -1,6 +1,6 @@
 ## Installation
 
-Use `$ make` or compile it anywhere else.
+Use `$ make` or compile it anywhere else, `$ make win` does the trick on windows and cygwin/gitbash.
 However if you use Visual Studio use the C++ implementation in __../src/cpp_implementation__.
 It's a carbon copy of the *.c file but VS wants to use a *.cpp file.
 
