@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <float.h> // DBL_MAX
+#include "nlms_types.h" // added types
 
 #define NUMBER_OF_SAMPLES 50
 #define WINDOWSIZE 5
@@ -21,35 +22,9 @@
 typedef SSIZE_T ssize_t;
 #endif
 
-enum fileSuffix_t{ // used in conjunction with mkFileName()
-    PURE_WEIGHTS,
-    USED_WEIGHTS,
-    DIRECT_PREDECESSOR,
-    RESULTS,
-    LOCAL_MEAN,
-    TEST_VALUES,
-    DIFFERENTIAL_PREDECESSOR
-};
-
 double xSamples[NUMBER_OF_SAMPLES] = { 0.0 };
 
-/* *svg graph building* */
-typedef struct {
-	double xVal[7];
-	double yVal[7];
-}point_t;
-
 point_t points[NUMBER_OF_SAMPLES]; // [0] = xActual, [1]=xpredicted from localMean, [2]=xpredicted from directPredecessor, [3] = xpredicted from differentialpredecessor, [4] = xError from localMean, [5] xError from directPredecessor, [6] xError from differentialPredecessor
-
-/* *ppm read, copy, write* */
-typedef struct {
-	unsigned char red, green, blue;
-}colorChannel_t;
-
-typedef struct {
-	int x, y;
-	colorChannel_t *data;
-}imagePixel_t;
 
 static imagePixel_t * rdPPM(char *fileName); // read PPM file format
 void mkPpmFile(char *fileName, imagePixel_t *image); // writes PPM file
@@ -74,19 +49,24 @@ double sum_array(double x[], int length);
 void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
 void localMean(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
 void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]);
-//void differentialPredecessor(double *weights);
+//void directPredecessor(double **weights, unsigned int windowSize, unsigned int samplesCount);
+//void localMean(double **weights, unsigned int windowSize, unsigned int samplesCount);
+//void differentialPredecessor(double **weightsi, unsigned int windowSize, unsigned int samplesCount);
 double *popNAN(double *xError); // Returns array without NAN values, if any exist
 double windowXMean(int _arraylength, int xCount);// returns mean value of given window
 
 int main( int argc, char **argv ) {
 	char *colorChannel = (char *) malloc(sizeof(char)* 32);  
+	double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]; // = { { 0.0 }, { 0.0 } };
 	char *inputfile = (char *)malloc(sizeof(char) * 32);
 	unsigned int *seed = NULL;
 	int i,k, xLength;
-	unsigned int windowSize = 5;
+	unsigned int windowSize = 0;
+	unsigned int samplesCount = 0;
 	char *stdcolor = "green";
 	colorChannel = stdcolor;
 	unsigned int uint_buffer[1];
+	double **buffer = NULL;
 	
 	while( (argc > 1) && (argv[1][0] == '-')  ) {	// Parses parameters from stdin
 			switch( argv[1][1] ) {
@@ -96,7 +76,7 @@ int main( int argc, char **argv ) {
 					--argc;
 					break;
 				case 'w':
-					sscanf(&argv[1][3], "%u", &windowSize);	
+					sscanf(&argv[1][3], "%u", &windowSize);	 
 					++argv;
 					--argc;
 					break;
@@ -111,6 +91,10 @@ int main( int argc, char **argv ) {
 					++argv;
 					--argc;
 					break;
+				case 'n':
+					sscanf(&argv[1][3], "%u", &samplesCount);
+					++argv;
+					--argc;			
 				case 'h':
 					printf("Program name: %s\n", argv[0]);
 					usage();
@@ -123,8 +107,19 @@ int main( int argc, char **argv ) {
 		++argv;
 		--argc;
 	}
+/*
+	if ( windowSize > 0 ) {
+			buffer = (double *) realloc (weights, sizeof(double) * windowSize * NUMBER_OF_SAMPLES );
+			weights = buffer;
+	} else if ( samplesCount > 0 ) {
+			buffer = (double *) realloc (weights, sizeof(double) * WINDOWSIZE * samplesCount);
+			weights = buffer;
+	} else if ( (samplesCount > 0) && (windowSize > 0) ){
+			buffer = (double *) realloc(weights, sizeof(double) *windowSize * samplesCount);
+			weights = buffer;
+	}
+*/
 	imagePixel_t *image;	
-	double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]; // = { { 0.0 }, {0.0} };
 	char fileName[50];
 	image = rdPPM(inputfile);
 	mkFileName(fileName, sizeof(fileName), TEST_VALUES);
@@ -134,9 +129,9 @@ int main( int argc, char **argv ) {
 	FILE* fp6 = fopen(fileName, "r");
 	colorSamples(fp6);
 
-	if ( (seed != NULL) && (seed >= 0) ){ 
+	if ( (seed != NULL) && (seed >= 0) ){ 			// seed >= 0 is redundant
 		srand( *seed );					// Seed for random number generating
-		printf("srand is reproducable : %s");
+		printf("srand is reproducable : %u", seed);
 	} else {
 		srand( (unsigned int)time(NULL) );
 		printf("srand from time");			// Default seed is time(NULL)
@@ -267,7 +262,7 @@ void directPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	// File handling
 	mkFileName(fileName, sizeof(fileName), DIRECT_PREDECESSOR);
 	FILE *fp3 = fopen(fileName, "w");
-	fprintf(fp3, "\n=====================================DirectPredecessor=====================================\nNo.\txPredicted\txAcutal\t\txError\n");
+	fprintf(fp3, "\n===================================== DirectPredecessor =====================================\nNo.\txPredicted\txAcutal\t\txError\n");
 
 
 	for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
@@ -344,7 +339,7 @@ void differentialPredecessor(double weights[WINDOWSIZE][NUMBER_OF_SAMPLES]) {
 	// File handling
 	mkFileName(fileName, sizeof(fileName), DIFFERENTIAL_PREDECESSOR);
 	FILE *fp6 = fopen(fileName, "w");
-	fprintf(fp6, "\n=====================================DifferentialPredecessor=====================================\nNo.\txPredicted\txAcutal\t\txError\n");
+	fprintf(fp6, "\n===================================== DifferentialPredecessor =====================================\nNo.\txPredicted\txAcutal\t\txError\n");
 
 		for (xCount = 1; xCount < NUMBER_OF_SAMPLES; xCount++) { // first value will not get predicted
 
@@ -804,3 +799,5 @@ void usage ( void ) {
 	printf("lms compares prediction methods of least mean square methods.\nBy default it reads ppm file format and return logfiles as well\nas an svg graphs as an output of said least mean square methods.\n\nExample:\n\tlms -i myimage.ppm -w 3 -c green -s 5\n"); 
 	exit(8);
 }
+
+
