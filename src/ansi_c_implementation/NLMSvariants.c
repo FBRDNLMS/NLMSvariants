@@ -20,19 +20,6 @@ Created by Stefan Friese on 26.04.2018
 typedef SSIZE_T ssize_t;
 #endif
 
-typedef struct {
-	double *weights;
-	unsigned windowSize;
-	unsigned samplesCount;
-	double learnrate;
-} mldata_t;
-
-enum fileHeader{
-	LOCAL_MEAN_HEADER,
-	DIRECT_PREDECESSOR_HEADER,
-	DIFFERENTIAL_PREDECESSOR_HEADER
-};
-
 double *xSamples;
 mldata_t *mlData = NULL;	// Machine learning
 point_t *points = NULL;		// Graphing			

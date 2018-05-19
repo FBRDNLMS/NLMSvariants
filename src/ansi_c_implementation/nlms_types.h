@@ -1,6 +1,14 @@
 
+/* * machine learning * */					
+typedef struct {					
+	double *weights;
+	unsigned windowSize;
+	unsigned samplesCount;
+	double learnrate;
+} mldata_t;
+
 /* *svg graph building* */
-typedef struct {
+typedef struct {						// Axis x,y
 	double xVal[7];
 	double yVal[7];
 }point_t;
@@ -10,12 +18,13 @@ typedef struct {
 	unsigned char red, green, blue;
 }colorChannel_t;
 
-typedef struct {
+typedef struct {						// Storage for image data 
 	int x, y;
 	colorChannel_t *data;
-}imagePixel_t;
+}imagePixel_t;						
 
-enum fileSuffix_t{ // used in conjunction with mkFileName()
+/** file handling* */
+enum fileSuffix_t{ 						// Used in conjunction with mkFileName()
     PURE_WEIGHTS,
     USED_WEIGHTS,
     DIRECT_PREDECESSOR,
@@ -25,4 +34,9 @@ enum fileSuffix_t{ // used in conjunction with mkFileName()
     DIFFERENTIAL_PREDECESSOR
 };
 
+enum fileHeader{						
+	LOCAL_MEAN_HEADER,
+	DIRECT_PREDECESSOR_HEADER,
+	DIFFERENTIAL_PREDECESSOR_HEADER
+};
 
