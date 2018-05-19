@@ -17,6 +17,8 @@ More information can be found inside the according folders.
 │
 ├───bin
 │       CS_NMLS_with_UI.exe
+│       ANSI_C_NLMS.exe
+│       CPP_NLMS.exe
 │
 ├───doc
 │       Doc.txt
@@ -25,12 +27,16 @@ More information can be found inside the according folders.
     ├───ansi_c_implementation 
     │       graphResults_template.html
     │       Makefile
+    │       nlms_types.h 
     │       NLMSvariants.c
     │       README.md
     │
     ├───cpp_implementation
     │       graphResults_template.html
+    │       nlms_types.h  
     │       NLMSvariants.cpp
+    │       README.md
+    │
     │
     └───c_sharp_implementation
             NLMSvariants.cs
