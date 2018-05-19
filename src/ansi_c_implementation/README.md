@@ -28,7 +28,7 @@ There are a bunch of options you can predefine but do not have to. The only para
 | -n	    | Amount of input data used     | 500    |
 | -w        | Size of  M (window)      	    | 5      |
 | -c        | Choose RGB color channel, green has least noise. | green  |
-| -l        | Learnrate of machine learning | 0.8    |
+| -l        | Learnrate of machine learning | 0.4    |
 | -s        | Seed randomizing weights. Choose for repoducability. | time(NULL)| 
 
 This code is ANSI compatible no POSIX, C99, C11 or GNU libs, because it had to be VS compatible . There are way easier methods like getline() or getopt(), I know ...
