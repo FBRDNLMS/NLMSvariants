@@ -1,16 +1,17 @@
-//
-//
-//  NLMSvariants.c
-//
-//  Created by Stefan Friese on 26.04.18.
-//
-//
+/*
+===========================================================================
+
+Created by Stefan Friese on 26.04.2018
+
+===========================================================================
+*/
+// 
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
-#include <float.h> // DBL_MAX
+//#include <float.h> // DBL_MAX
 #include "nlms_types.h" // added types
 
 #define RGB_COLOR 255
@@ -79,7 +80,7 @@ int main( int argc, char **argv ) {
 	unsigned int *seed = NULL;
 	unsigned k, xLength;
 	unsigned int windowSize = 5;
-	unsigned int samplesCount = 20;
+	unsigned int samplesCount = 501;
 	char *stdcolor = "green";
 	colorChannel = stdcolor;
 	unsigned int uint_buffer[1];
@@ -861,7 +862,7 @@ void usage ( void ) {
 	printf("\t-l <digit>\t\tLearnrate, 0 < learnrate < 1.\n");
 	printf("\t-s <digit>\t\tDigit for random seed generator.\n\t\t\t\tSame Digits produce same random values. Default is srand by time.");
 	printf("\n\n");
-	printf("lms compares prediction methods of least mean square methods.\nBy default it reads ppm file format and return logfiles as well\nas an svg graphs as an output of said least mean square methods.\n\nExample:\n\tlms -i myimage.ppm -w 3 -c green -s 5\n"); 
+	printf("lms compares prediction methods of least mean square filters.\nBy default it reads ppm file format and return logfiles as well\nas an svg graphs as an output of said least mean square methods.\n\nExample:\n\tlms -i myimage.ppm -w 3 -c green -s 5\n"); 
 	exit(8);
 }
 
