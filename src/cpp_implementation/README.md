@@ -22,7 +22,7 @@ Use `$ <binary>  -h` for help.
 There are a bunch of options you can predefine but do not have to. The only parameter needed is __-i__ which is the inputfile.
 
 | Parameter |      Description              | StdVal |
-|----------:|:-----------------------------:|:-------|
+|:----------|:-----------------------------:|:-------|
 | -i 	    | The inputfile, has to be PPM  | none   |
 | -n	    | Amount of input data used     | 500    |
 | -w        | Size of  M (window)      	    | 5      |
