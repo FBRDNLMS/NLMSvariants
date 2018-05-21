@@ -46,7 +46,7 @@ double r2 ( void );						// Random val between 0 and 1
 double rndm ( void );
 
 /* *args parser* */
-void usage ( void ); 						// Help text called by args parser
+void usage ( char **argv ); 						// Help text called by args parser
 
 /* *math* */
 mldata_t * init_mldata_t(unsigned windowSize, unsigned samplesCount, double learnrate);
@@ -65,7 +65,7 @@ int main( int argc, char **argv ) {
 	char *colorChannel = (char *) malloc(sizeof(char)* 32);
 	char *inputfile = (char *)malloc(sizeof(char) * 32);
 	unsigned int *seed = NULL;
-	unsigned k, xLength;
+	unsigned k, xclude = 0;
 	unsigned int windowSize = 5;
 	unsigned int samplesCount = 512;
 	char *stdcolor = "green";
@@ -104,16 +104,21 @@ int main( int argc, char **argv ) {
 					break;			
 				case'h':
 					printf("Program name: %s\n", argv[0]);
-					usage();
+					usage(argv);
 					break;
 				case 'l':
 					sscanf(&argv[1][3], "%lf", &learnrate);
 					++argv;
 					--argc;
 					break;
+				case 'x':
+					xclude = 1;
+					++argv;
+					--argc;
+					break;
 				default:
 					printf("Wrong Arguments: %s\n", argv[1]);
-					usage();		
+					usage(argv);		
 			}
 		
 		++argv;
@@ -128,13 +133,14 @@ int main( int argc, char **argv ) {
 	char fileName[50];								// Logfiles and their names 
 	mkFileName(fileName, sizeof(fileName), TEST_VALUES);
 	FILE* fp5 = fopen(fileName, "w");
-	xLength = ppmColorChannel(fp5, image, colorChannel, mlData); 			// Returns length of ppm input values, debugging
+	//xLength = 
+	ppmColorChannel(fp5, image, colorChannel, mlData); 				// Returns length of ppm input values, debugging
 	FILE* fp6 = fopen(fileName, "r");
 	colorSamples(fp6, mlData);
 
 	if ( (seed != NULL) ){ 			
 		srand( *seed );								// Seed for random number generating
-		printf("srand is reproducable\n", seed);
+		printf("srand is reproducable\n");
 	} else {
 		srand( (unsigned int)time(NULL) );
 		printf("srand depends on time\n");					// Default seed is time(NULL)
@@ -160,8 +166,10 @@ int main( int argc, char **argv ) {
     	localMean ( mlData, points );
 	directPredecessor ( mlData, points);
 	differentialPredecessor( mlData, points );
-	
-	mkSvgGraph(points);								// Graph building
+
+	if ( xclude == 0 ) {	
+		mkSvgGraph(points);							// Graph building
+	}
 	free(xSamples);
 	free(points);
 	free(mlData);
@@ -182,7 +190,7 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 	memcpy ( localWeights, mlData->weights, mlData->windowSize ); 					// Copy weights so they can be changed locally
 	
 	char fileName[50];
-	double xError[2048]; 										// Includes e(n)		
+	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount + 1);					// Includes e(n)		
 	memset(xError, 0.0, mlData->samplesCount);							// Initialize xError-array with Zero		
 	unsigned i, xCount = 0; 									// Runtime vars
 	mkFileName(fileName, sizeof(fileName), LOCAL_MEAN);						// Create Logfile and its filename
@@ -264,7 +272,7 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 	double *localWeights = ( double * ) malloc ( sizeof(double) * mlData->windowSize + 1 );
 	memcpy ( localWeights, mlData->weights, mlData->windowSize );
 	char fileName[512];
-	double xError[2048];
+	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount );
 	unsigned xCount = 0, i;
 	double xActual = 0.0;
 	double xPredicted = 0.0;
@@ -349,7 +357,7 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	double *localWeights = (double *) malloc ( sizeof(double) * mlData->windowSize + 1 );
 	memcpy( localWeights, mlData->weights, mlData->windowSize );
 	char fileName[512];
-	double xError[2048];
+	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount);
 	unsigned xCount = 0, i;
 	double xPredicted = 0.0;
 	double xActual = 0.0;
@@ -519,8 +527,8 @@ formats output of mkSvgGraph -- Please open graphResults.html to see the output-
 */
 void bufferLogger(char *buffer, point_t points[]) {
 	unsigned i;
-	char _buffer[512] = "";
-
+	char _buffer[512] = ""; // TODO: resize buffer and _buffer so greater sampleval can be choosen
+//	char *_buffer = (char *) malloc ( sizeof(char) * 512 + 1);
 	for (i = 0; i < mlData->samplesCount - 1; i++) { 									// xActual
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[0], points[i].yVal[0]);
 		strcat(buffer, _buffer);
@@ -641,10 +649,17 @@ void mkSvgGraph(point_t points[]) {
 	char firstGraph[15] = { "<path d=\"M0 0" };			// Position where points will be written after
 
 	if (input == NULL) {
+		printf("No inputfile at mkSvgGraph()");
 		exit(EXIT_FAILURE);
 	}
 
+	fseek(input, 0, SEEK_END);
+	long fpLength = ftell(input);
+	fseek(input, 0, SEEK_SET);
+	
+
 	char buffer[131072] = "";					// Bit dirty
+//	char *buffer = (char *) malloc ( sizeof(char) * ( ( 3 * mlData->samplesCount ) + fpLength + 1 ) );
 
 	memset(buffer, '\0', sizeof(buffer));
 	while (!feof(input)) {						// parses file until "firstGraph" has been found 	
@@ -672,6 +687,7 @@ static imagePixel_t *rdPPM(char *fileName) {
 	char buffer[16];
 	imagePixel_t *image;
 	int c, rgbColor;
+	double	 	*tmp;
 
 	FILE *fp = fopen(fileName, "rb");
 	if (!fp) {
@@ -709,10 +725,16 @@ static imagePixel_t *rdPPM(char *fileName) {
 	while ( fgetc(fp) != '\n' );
 	image->data = (colorChannel_t *)malloc(image->x * image->y * sizeof(imagePixel_t));
 	if (!image) {
-		fprintf(stderr, "malloc() failed");
+		fprintf(stderr, "malloc() on image->data failed");
 		exit(EXIT_FAILURE);
 	}
-	if (fread(image->data, 3 * image->x, image->y, fp) != image->y) {
+	if ( (image->x * image->y) < mlData->samplesCount) {
+		printf("Changing \"-n\" to %d, image max data size\n", ( image->x * image->y ) );
+		tmp = (double *) realloc ( xSamples, sizeof(double) * (image->x * image->y) );
+		xSamples = tmp;
+		mlData->samplesCount = (image->x * image->y ) / sizeof(double);
+	}
+	if ( fread( image->data, 3 * image->x, image->y, fp) != image->y) {
 		fprintf(stderr, "Loading image failed");
 		exit(EXIT_FAILURE);
 	}
@@ -766,7 +788,7 @@ int ppmColorChannel(FILE* fp, imagePixel_t *image, char *colorChannel, mldata_t 
 				fprintf ( fp, "%d\n", image->data[i].red );
 			}	
 			
-		} else if (strcmp(colorChannel, "blue") == 0 ) {
+		} else if ( strcmp(colorChannel, "blue") == 0 ) {
 			for ( i = 0; i < mlData->samplesCount - 1; i++ ) {
 				fprintf ( fp, "%d\n", image->data[i].blue );	
 			}
@@ -791,7 +813,7 @@ creating the SVG graph
 */
 void colorSamples ( FILE* fp, mldata_t *mlData ) {
 	int i = 0;
-	char *buffer = (char *) malloc(sizeof(char) * mlData->samplesCount);
+	char *buffer = (char *) malloc(sizeof(char) * mlData->samplesCount + 1);
 
 	while (!feof(fp)) {
 		if (fgets(buffer, mlData->samplesCount, fp) != NULL) {			
@@ -833,16 +855,17 @@ double windowXMean(int _arraylength, int xCount) {
 
 ======================================================================================================
 */
-void usage ( void ) {
-	printf("Usage: lms [POSIX style options] -i file ...\n");
+void usage ( char **argv ) {
+	printf("Usage: %s [POSIX style options] -i file ...\n", &argv[0][0]);
 	printf("POSIX options:\n");
 	printf("\t-h\t\t\tDisplay this information.\n");
 	printf("\t-i <filename>\t\tName of inputfile. Must be PPM image.\n");
 	printf("\t-n <digit>\t\tAmount of input data used.\n");	
 	printf("\t-c <color>\t\tUse this color channel from inputfile.\n");
 	printf("\t-w <digit>\t\tCount of used weights (windowSize).\n");
-	printf("\t-l <digit>\t\tLearnrate, 0 < learnrate < 1.\n");
-	printf("\t-s <digit>\t\tDigit for random seed generator.\n\t\t\t\tSame Digits produce same random values. Default is srand by time.");
+	printf("\t-l <digit>\t\tLearnrate, 0 < learnrate < 1.\n");	
+	printf("\t-x <none>\t\tLogfiles only, no graph building. Choose for intense amount of input data.\n");
+	printf("\t-s <digit>\t\tDigit for random seed generator.\n\t\t\t\tSame Digits produce same random values. Default is srand by time.\n");	
 	printf("\n\n");
 	printf("lms compares prediction methods of least mean square filters.\nBy default it reads ppm file format and return logfiles as well\nas an svg graphs as an output of said least mean square methods.\n\nExample:\n\tlms -i myimage.ppm -w 3 -c green -s 5\n"); 
 	exit(8);
