@@ -28,5 +28,6 @@ There are a bunch of options you can predefine but do not have to. The only para
 | -w        | Size of  M (window)      	    | 5      |
 | -c        | Choose RGB color channel, green has least noise. | green  |
 | -l        | Learnrate of machine learning | 0.4    |
+| -x	    | Exclude graph building. Logfiles only, choose for insane amount of input data. 10Mio. Pixels tested so far.| none|
 | -s        | Seed randomizing weights. Choose for repoducability. | time(NULL)| 
 
