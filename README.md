@@ -21,8 +21,11 @@ More information can be found inside the according folders.
 │       CPP_NLMS.exe
 │
 ├───doc
-│       Doc.txt
+│       Aufgabenstellung.pdf
+│       Dokumentation.pdf
+│       Zeitplan.pdf
 │
+│       
 └───src
     ├───ansi_c_implementation 
     │       graphResults_template.html
