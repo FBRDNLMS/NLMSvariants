@@ -214,7 +214,6 @@ namespace NMLS_Graphisch
                 x_pred += x_middle;
 
                 /* If output is checked a file is produced with prediction, actual and the error */
-
                 if (checkBox_output.Checked)
                 {
                     File.AppendAllText("localMean.txt",
