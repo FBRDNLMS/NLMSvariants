@@ -1,3 +1,10 @@
+/*
+===========================================================================
+
+Created by Kevin Becker on 19.04.2018
+
+===========================================================================
+*/
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -40,8 +47,27 @@ namespace NMLS_Graphisch
         private void GO_btn_Click(object sender, EventArgs e)
         {
 
-            /* Initializing the chart to display all values */
+            /* Initializing NumberOfSamples with the choosen pixelcount */
             NumberOfSamples = Int32.Parse(comboBox_pixel.SelectedItem.ToString());
+
+            /* Initializing the learnrate with the choosen one */
+            txtBox_learnrate.Text = txtBox_learnrate.Text.Replace(".", ",");
+            learnrate = Double.Parse(txtBox_learnrate.Text);
+            while(learnrate <= 0.0 || learnrate > 1.0)
+            {
+                MessageBox.Show("Bitte geben sie als lernrate eine Zahl von >0 bis <=1 ein");
+                var myValue = Microsoft.VisualBasic.Interaction.InputBox("Geben Sie eine Lernarte zwischen >0.0 & <=1.0", "Lernrate", "0,8");
+                if(myValue == "")
+                {
+                    return;
+                }
+                else
+                {
+                    learnrate = Double.Parse(myValue);
+                }
+            }
+
+            /* Initializing the chart to display all values */
             chart_main.ChartAreas[0].AxisX.Maximum = NumberOfSamples;
             chart_main.ChartAreas[0].AxisY.Maximum = 300;
             chart_main.ChartAreas[0].AxisY.Minimum = -100;
@@ -155,7 +181,7 @@ namespace NMLS_Graphisch
 
                 double x_pred = 0.0;
                 double[] x_array = _x;
-                double x_actual = _x[x_count + 1];
+                double x_actual = _x[x_count];
 
                 /* Prediction algorithem */
 
@@ -268,7 +294,7 @@ namespace NMLS_Graphisch
             while (x_count < NumberOfSamples - 1)
             {
                 double x_pred = 0.0;
-                double x_actual = _x[x_count + 1];
+                double x_actual = _x[x_count];
 
                 if (x_count > 0)
                 {
@@ -384,7 +410,7 @@ namespace NMLS_Graphisch
             while (x_count < NumberOfSamples - 1)
             {
                 double x_pred = 0.0;
-                double x_actual = _x[x_count + 1];
+                double x_actual = _x[x_count];
                 if (x_count > 0)
                 {
 
@@ -484,15 +510,21 @@ namespace NMLS_Graphisch
         *---------------------------------------------------*/
         private void Form1_Load(object sender, EventArgs e)
         {
+            /* Initializing some diffrent combo-/textboxes and the main chart */
             comboBox_algorithem.SelectedIndex = 0;
             comboBox_pixel.SelectedIndex = 0;
+            // sets an eventhandler on the gotFocus event
+            txtBox_learnrate.GotFocus += new EventHandler(txtBox_learnrate_gotFocus); 
+            txtBox_learnrate.Text = ">0.0 & <=1.0";
             chart_main.Series.Clear();
             Series x_actual = new Series("Actual x Value");
             x_actual.ChartType = SeriesChartType.Spline;
 
+
+
             /*  Initializing weights and actual values
                 In case no picture is loaded, actual values are generated
-                And printing them on a chart */
+                Then printing them on a chart */
             for (int i = 0; i < NumberOfSamples; i++)
             {
                 _x[i] += ((255.0 / NumberOfSamples) * i);
@@ -503,6 +535,18 @@ namespace NMLS_Graphisch
                 x_actual.Points.AddXY(i, _x[i]);
             }
             chart_main.Series.Add(x_actual);
+        }
+
+        /*--------------------------------------------------
+         *  txtBox_learnrate_gotFocus()
+         * 
+         *  sets the default text to "" if gotFocus is raised
+         * 
+         * -------------------------------------------------*/
+
+        protected void txtBox_learnrate_gotFocus(Object sender, EventArgs e)
+        {
+            txtBox_learnrate.Text = "";
         }
 
         /*---------------------------------------------------
