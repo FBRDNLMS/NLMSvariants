@@ -24,7 +24,7 @@ typedef struct {						// Storage for image data
 }imagePixel_t;						
 
 /** file handling* */
-enum fileSuffix_t{ 						// Used in conjunction with mkFileName()
+enum fileSuffix_t{ 						// Used in conjunction with MkFileName()
     PURE_WEIGHTS,
     USED_WEIGHTS,
     DIRECT_PREDECESSOR,
@@ -34,7 +34,7 @@ enum fileSuffix_t{ 						// Used in conjunction with mkFileName()
     DIFFERENTIAL_PREDECESSOR
 };
 
-enum fileHeader{						
+enum fileHeader{						// Used in conjunction with MkFilename()
 	LOCAL_MEAN_HEADER,
 	DIRECT_PREDECESSOR_HEADER,
 	DIFFERENTIAL_PREDECESSOR_HEADER
