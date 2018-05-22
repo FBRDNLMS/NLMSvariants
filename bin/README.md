@@ -4,7 +4,7 @@
 
 ![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/CS_exe_screenshot_1.PNG "C# .exe with loaded picture")
 
-1. Choose the algorithem u want to calculate on and press "start" or "enter"
+1. Choose the algorithm u want to calculate on and press "start" or "enter"
 
 2. Choose the number of pixels you want to go for
 
@@ -23,9 +23,9 @@
 
 ![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/CS_exe_screenshot_2.PNG "C# .exe with loaded picture and calculated")
 
-1. Displayes the average error of the calculated algorithem
+1. Displays the average error of the calculated algorithm
 
-2. Displayes the variance of the erroer of the calculated algorithem
+2. Displays the variance of the error of the calculated algorithm
 
 3. The history of graphs displayed in the chart, it is possible to have graphs of all 3 LMS algorithems in the history.
    There is no way to hide graphs, simply use "Clear" and then calculate again.
