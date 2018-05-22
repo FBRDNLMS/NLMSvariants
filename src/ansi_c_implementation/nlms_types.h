@@ -26,12 +26,14 @@ typedef struct {						// Storage for image data
 /** file handling* */
 enum fileSuffix_t{ 						// Used in conjunction with MkFileName()
     PURE_WEIGHTS,
-    USED_WEIGHTS,
+    USED_WEIGHTS_DIR_PRED,
     DIRECT_PREDECESSOR,
     RESULTS,
     LOCAL_MEAN,
     TEST_VALUES,
-    DIFFERENTIAL_PREDECESSOR
+    DIFFERENTIAL_PREDECESSOR,
+    USED_WEIGHTS_LOCAL_MEAN,
+    USED_WEIGHTS_DIFF_PRED
 };
 
 enum fileHeader{						// Used in conjunction with MkFilename()

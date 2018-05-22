@@ -20,7 +20,7 @@ Created by Stefan Friese on 26.04.2018
 typedef SSIZE_T ssize_t;
 #endif
 
-double *xSamples;
+double *xSamples;		// Input values
 mldata_t *mlData = NULL;	// Machine learning
 point_t *points = NULL;		// Graphing			
 
@@ -64,13 +64,13 @@ double windowXMean(int _arraylength, int xCount);		// Returns mean value of give
 int main( int argc, char **argv ) {
 	char *colorChannel = (char *) malloc(sizeof(char)* 32);
 	char *inputfile = (char *)malloc(sizeof(char) * 32);
-	unsigned int *seed = NULL;
+	unsigned *seed = NULL;
 	unsigned k, xclude = 0;
-	unsigned int windowSize = 5;
-	unsigned int samplesCount = 512;
-	char *stdcolor = "green";
+	unsigned windowSize = 5;
+	unsigned samplesCount = 512;
+	char *stdcolor = "green", xBuffer[512];
 	colorChannel = stdcolor;
-	unsigned int uint_buffer[1];
+	unsigned int uint_buffer[1], windowBuffer[1];
 	double learnrate = 0.4;
 	
 	
@@ -82,7 +82,8 @@ int main( int argc, char **argv ) {
 					--argc;
 					break;
 				case 'w':
-					sscanf(&argv[1][3], "%u", &windowSize);	 
+					sscanf(&argv[1][3], "%u", windowBuffer);
+					windowSize = windowBuffer[0];		
 					++argv;
 					--argc;
 					break;
@@ -112,7 +113,8 @@ int main( int argc, char **argv ) {
 					--argc;
 					break;
 				case 'x':
-					xclude = 1;
+					sscanf(&argv[1][3], "%s", xBuffer);
+					xclude = 1;	
 					++argv;
 					--argc;
 					break;
@@ -124,12 +126,14 @@ int main( int argc, char **argv ) {
 		++argv;
 		--argc;
 	}
+
 	init_mldata_t ( windowSize, samplesCount, learnrate );
 	xSamples = (double *) malloc ( sizeof(double) * mlData->samplesCount ); 	// Resize input values
 	points = (point_t *) malloc ( sizeof(point_t) * mlData->samplesCount);		// Resize points
 	imagePixel_t *image;									
-	image = rdPPM(inputfile);							// Set Pointer on input values
-	
+	image = rdPPM(inputfile);							// Set Pointer on input values	
+
+	printf("window Size: %d\n", mlData->windowSize); 
 	char fileName[50];								// Logfiles and their names 
 	mkFileName(fileName, sizeof(fileName), TEST_VALUES);
 	FILE* fp5 = fopen(fileName, "w");
@@ -146,20 +150,19 @@ int main( int argc, char **argv ) {
 		printf("srand depends on time\n");					// Default seed is time(NULL)
 	}
 	printf("generated weights:\n");
-//	for (i = 0; i < NUMBER_OF_SAMPLES; i++) {
-		for (k = 0; k < mlData->windowSize; k++) {			
+
+	for (k = 0; k < mlData->windowSize; k++) {			
 		mlData->weights[k] = rndm(); 						// Init random weights
-		printf("%lf\n", mlData->weights[k]);
-		}
-//	}
+		printf("[%d] %lf\n", k, mlData->weights[k]);
+	}
+
 
 	mkFileName(fileName, sizeof(fileName), PURE_WEIGHTS);				// Logfile weights
 	FILE *fp0 = fopen(fileName, "w");
-//	for (i = 0; i < NUMBER_OF_SAMPLES; i++) {
-		for (k = 0; k < mlData->windowSize; k++) {
-			fprintf(fp0, "[%d]%lf\n", k, mlData->weights[k]);	
-		}
-//	}
+	for (k = 0; k < mlData->windowSize; k++) {
+	fprintf(fp0, "[%d]%lf\n", k, mlData->weights[k]);	
+	}
+
 	fclose(fp0);
 
 	/* *math magic* */
@@ -167,9 +170,12 @@ int main( int argc, char **argv ) {
 	directPredecessor ( mlData, points);
 	differentialPredecessor( mlData, points );
 
-	if ( xclude == 0 ) {	
+	if ( xclude == 0 ) {
 		mkSvgGraph(points);							// Graph building
-	}
+	
+	}	
+
+	free(image);
 	free(xSamples);
 	free(points);
 	free(mlData);
@@ -193,9 +199,14 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount + 1);					// Includes e(n)		
 	memset(xError, 0.0, mlData->samplesCount);							// Initialize xError-array with Zero		
 	unsigned i, xCount = 0; 									// Runtime vars
+
 	mkFileName(fileName, sizeof(fileName), LOCAL_MEAN);						// Create Logfile and its filename
 	FILE* fp4 = fopen(fileName, "w");								
-	fprintf( fp4, fileHeader(LOCAL_MEAN_HEADER) );					
+	fprintf( fp4, fileHeader(LOCAL_MEAN_HEADER) );		
+	
+	mkFileName ( fileName, sizeof(fileName), USED_WEIGHTS_LOCAL_MEAN);
+	FILE *fp9 = fopen(fileName, "w");
+				
 
 	double xMean = xSamples[0];
 	double xSquared = 0.0;
@@ -221,8 +232,9 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 			xSquared = 1.0;
 		}
 		for ( i = 1; i < _arrayLength; i++ ) { 								// Update weights
-			localWeights[ i + 1 ] = localWeights[i] + mlData->learnrate * xError[xCount]  		// Substract localMean
+			localWeights[i] = localWeights[i - 1] + mlData->learnrate * xError[xCount]  		// Substract localMean
 				* ( (xSamples[xCount - i] - xMean) / xSquared );
+			fprintf( fp9, "%lf\n", localWeights[i] );
 		}
 		
 		fprintf(fp4, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);			// Write to logfile
@@ -234,6 +246,7 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 
 
 	}
+	fclose(fp9);
 	double *xErrorPtr = popNAN(xError); 									// delete NAN values from xError[]
 	double  xErrorLength = *xErrorPtr; 									// Watch popNAN()!
   	xErrorPtr[0] = 0.0;
@@ -246,9 +259,11 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 	}
 	deviation /= xErrorLength;										// Deviation
 	printf("mean:%lf, devitation:%lf\t\tlocal Mean\n", mean, deviation);
-
 	fprintf(fp4, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);	// Write to logfile
 	free(localWeights);
+	free(xErrorPtr);
+	free(xError);
+
 	fclose(fp4);
 
 	//weightsLogger( local_weights, USED_WEIGHTS );
@@ -268,7 +283,7 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 	double *localWeights = ( double * ) malloc ( sizeof(double) * mlData->windowSize + 1 );
 	memcpy ( localWeights, mlData->weights, mlData->windowSize );
 	char fileName[512];
-	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount );
+	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount + 1 );
 	unsigned xCount = 0, i;
 	double xActual = 0.0;
 	double xPredicted = 0.0;
@@ -276,9 +291,9 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 	mkFileName(fileName, sizeof(fileName), DIRECT_PREDECESSOR);						// Logfile and name handling
 	FILE *fp3 = fopen(fileName, "w");
 	fprintf( fp3, fileHeader(DIRECT_PREDECESSOR_HEADER) );
-	mkFileName ( fileName, sizeof(fileName), USED_WEIGHTS);
+	
+	mkFileName ( fileName, sizeof(fileName), USED_WEIGHTS_DIR_PRED);
 	FILE *fp9 = fopen(fileName, "w");
-
 
 	for (xCount = 1; xCount < mlData->samplesCount; xCount++) { // first value will not get predicted
 		unsigned _arrayLength = ( xCount > mlData->windowSize ) ? mlData->windowSize + 1 : xCount;
@@ -300,7 +315,7 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 			xSquared = 1.0;
 		}
 		for ( i = 1; i < _arrayLength; i++ ) {										// Update weights
-			localWeights[i + 1] = localWeights[i] + mlData->learnrate * xError[xCount] 				
+			localWeights[i] = localWeights[i-1] + mlData->learnrate * xError[xCount] 				
 				* ( (xSamples[xCount - 1] - xSamples[xCount - i - 1]) / xSquared);				
 			fprintf( fp9, "%lf\n", localWeights[i] );
 		}
@@ -329,11 +344,11 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 	}
 	deviation /= xErrorLength;												// Deviation
 	printf("mean:%lf, devitation:%lf\t\tdirect Predecessor\n", mean, deviation);
-
 	fprintf(fp3, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 	fclose(fp3);
 	free(localWeights);
-
+	free(xErrorPtr);
+	free(xError);
 }
 
 /*
@@ -350,15 +365,17 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	double *localWeights = (double *) malloc ( sizeof(double) * mlData->windowSize + 1 );
 	memcpy( localWeights, mlData->weights, mlData->windowSize );
 	char fileName[512];
-	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount);
+	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount + 1);
 	unsigned xCount = 0, i;
 	double xPredicted = 0.0;
 	double xActual = 0.0;
 
-
 	mkFileName(fileName, sizeof(fileName), DIFFERENTIAL_PREDECESSOR);							// File handling
 	FILE *fp6 = fopen(fileName, "w");
 	fprintf(fp6, fileHeader(DIFFERENTIAL_PREDECESSOR_HEADER) );
+
+	mkFileName ( fileName, sizeof(fileName), USED_WEIGHTS_DIFF_PRED);
+	FILE *fp9 = fopen(fileName, "w");
 
 		for (xCount = 1; xCount < mlData->samplesCount; xCount++) { 							// First value will not get predicted
 
@@ -381,7 +398,10 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 		}
 
 		for (i = 1; i < _arrayLength; i++) {
-			localWeights[i+1] = localWeights[i] + mlData->learnrate * xError[xCount] * ((xSamples[xCount - i] - xSamples[xCount - i - 1]) / xSquared);
+			localWeights[i] = localWeights[i-1] + mlData->learnrate * xError[xCount] 
+				* ((xSamples[xCount - i] - xSamples[xCount - i - 1]) / xSquared);
+			fprintf( fp9, "%lf\n", localWeights[i] );
+
 		}
        		fprintf(fp6, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]); // Write to logfile
 		
@@ -391,7 +411,7 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 		points[xCount].yVal[6] = xError[xCount];
 
 	}
-
+	fclose(fp9);
 	double *xErrorPtr = popNAN(xError); 											// delete NAN values from xError[]
 	double  xErrorLength = *xErrorPtr; 											// Watch popNAN()!
     	xErrorPtr[0] = 0.0;
@@ -406,10 +426,12 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	}
 	deviation /= xErrorLength;
 	printf("mean:%lf, devitation:%lf\t\tdifferential Predecessor\n", mean, deviation);
-
 	fprintf(fp6, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 	fclose(fp6);
 	free(localWeights);
+	free(xErrorPtr);
+	free(xError);
+
 
 //	weightsLogger( localWeights, USED_WEIGHTS );
 }
@@ -448,12 +470,14 @@ Contains and returns every suffix for all existing filenames
 */
 char * fileSuffix ( int id ) {
 	char * suffix[] = { 	"_weights_pure.txt", 
-				"_weights_used.txt", 
+				"_weights_used_dir_pred_.txt", 
 				"_direct_predecessor.txt", 
 				"_ergebnisse.txt", 
 				"_localMean.txt",
 				"_testvalues.txt", 
-				"_differential_predecessor.txt" 
+				"_differential_predecessor.txt",
+				"_weights_used_local_mean",
+				"_weights_used_diff_pred",
 	};
 	return suffix[id];
 }
@@ -490,11 +514,8 @@ void weightsLogger (double *weights, int val ) {
 	mkFileName(fileName, sizeof(fileName), val);
 	FILE* fp = fopen(fileName, "wa");
 	for (i = 0; i < mlData->windowSize - 1; i++) {
-	//	for (int k = 0; k < WINDOWSIZE; k++) {
-			fprintf(fp, "[%d]%lf\n", i, weights[i]);
-	//	}
+		fprintf(fp, "[%d]%lf\n", i, weights[i]);
 	}
-	fprintf(fp,"\n\n\n\n===================== NEXT =====================\n");
 	fclose(fp);
 }
 
@@ -853,10 +874,10 @@ void usage ( char **argv ) {
 	printf("\t-c <color>\t\tUse this color channel from inputfile.\n");
 	printf("\t-w <digit>\t\tCount of used weights (windowSize).\n");
 	printf("\t-l <digit>\t\tLearnrate, 0 < learnrate < 1.\n");	
-	printf("\t-x <none>\t\tLogfiles only, no graph building. Choose for intense amount of input data.\n");
+	printf("\t-x true\t\t\tLogfiles only, no graph building.\n\t\t\t\tChoose for intense amount of input data.\n");
 	printf("\t-s <digit>\t\tDigit for random seed generator.\n\t\t\t\tSame Digits produce same random values. Default is srand by time.\n");	
 	printf("\n\n");
-	printf("lms compares prediction methods of least mean square filters.\nBy default it reads ppm file format and return logfiles as well\nas an svg graphs as an output of said least mean square methods.\n\nExample:\n\tlms -i myimage.ppm -w 3 -c green -s 5\n"); 
+	printf("%s compares prediction methods of least mean square filters.\nBy default it reads ppm file format and return logfiles as well\nas an svg graphs as an output of said least mean square methods.\n\nExample:\n\t%s -i myimage.ppm -w 3 -c green -s 5 -x true\n", &argv[0][0], &argv[0][0]); 
 	exit(8);
 }
 
@@ -875,6 +896,6 @@ mldata_t * init_mldata_t(unsigned windowSize, unsigned samplesCount, double lear
 	mlData->windowSize = windowSize;
 	mlData->samplesCount = samplesCount;
 	mlData->learnrate = learnrate;
-	mlData->weights = (double *) malloc ( sizeof(double) * windowSize + 1 );
+	mlData->weights = (double *) malloc ( sizeof(double) * windowSize  + 1 );
 	return mlData;
 }
