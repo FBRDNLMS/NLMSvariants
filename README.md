@@ -19,7 +19,9 @@ More information can be found inside the according folders.
 │       CS_NMLS_with_UI.exe
 │       ANSI_C_NLMS.exe
 │       CPP_NLMS.exe
+│       README.md
 │
+│       
 ├───doc
 │       Aufgabenstellung.pdf
 │       Dokumentation.pdf
@@ -33,6 +35,7 @@ More information can be found inside the according folders.
     │       nlms_types.h 
     │       NLMSvariants.c
     │       README.md
+    │
     │
     ├───cpp_implementation
     │       graphResults_template.html
