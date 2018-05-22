@@ -247,11 +247,7 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 	deviation /= xErrorLength;										// Deviation
 	printf("mean:%lf, devitation:%lf\t\tlocal Mean\n", mean, deviation);
 
-	// write in file
-	//mkFileName(fileName, sizeof(fileName), RESULTS);
-	//FILE *fp2 = fopen(fileName, "w");
 	fprintf(fp4, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);	// Write to logfile
-	//fclose(fp2);
 	free(localWeights);
 	fclose(fp4);
 
@@ -333,12 +329,9 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 	}
 	deviation /= xErrorLength;												// Deviation
 	printf("mean:%lf, devitation:%lf\t\tdirect Predecessor\n", mean, deviation);
-	// write in file
-	//mkFileName(fileName, sizeof(fileName), RESULTS);
-	//FILE *fp2 = fopen(fileName, "wa");
+
 	fprintf(fp3, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 	fclose(fp3);
-	//fclose(fp2);
 	free(localWeights);
 
 }
@@ -414,11 +407,7 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	deviation /= xErrorLength;
 	printf("mean:%lf, devitation:%lf\t\tdifferential Predecessor\n", mean, deviation);
 
-	// write in file
-	//mkFileName(fileName, sizeof(fileName), RESULTS);
-	//FILE *fp2 = fopen(fileName, "wa");
 	fprintf(fp6, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
-	//fclose(fp2);
 	fclose(fp6);
 	free(localWeights);
 
