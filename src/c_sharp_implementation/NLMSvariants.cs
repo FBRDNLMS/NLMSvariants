@@ -44,19 +44,39 @@ namespace NMLS_Graphisch
          * 
          *---------------------------------------------------*/
 
-        private void GO_btn_Click(object sender, EventArgs e)
+        private void Start_btn_Click(object sender, EventArgs e)
         {
 
             /* Initializing NumberOfSamples with the choosen pixelcount */
             NumberOfSamples = Int32.Parse(comboBox_pixel.SelectedItem.ToString());
 
+            /* Initializing the weights */
+
+            w = new double[windowSize, NumberOfSamples];
+            for (int i = 0; i < NumberOfSamples; i++)
+            {
+                for (int k = 0; k < windowSize; k++)
+                {
+                    w[k, i] = rnd.NextDouble();
+                }
+            }
+
             /* Initializing the learnrate with the choosen one */
             txtBox_learnrate.Text = txtBox_learnrate.Text.Replace(".", ",");
-            learnrate = Double.Parse(txtBox_learnrate.Text);
+            try
+            {
+                learnrate = Double.Parse(txtBox_learnrate.Text);
+            }
+            catch(Exception exep)
+            {
+                MessageBox.Show("Please choose a learnrate between >0.0 and <=1.0");
+                return;
+            }
+            
             while(learnrate <= 0.0 || learnrate > 1.0)
             {
-                MessageBox.Show("Bitte geben sie als lernrate eine Zahl von >0 bis <=1 ein");
-                var myValue = Microsoft.VisualBasic.Interaction.InputBox("Geben Sie eine Lernarte zwischen >0.0 & <=1.0", "Lernrate", "0,8");
+                MessageBox.Show("Please choose a learnrate between >0.0 and <=1.0");
+                var myValue = Microsoft.VisualBasic.Interaction.InputBox("Choose a learnrate between >0.0 and <=1.0", "Learnrate", "0,8");
                 if(myValue == "")
                 {
                     return;
@@ -66,6 +86,8 @@ namespace NMLS_Graphisch
                     learnrate = Double.Parse(myValue);
                 }
             }
+
+            /* Initializing the windowsize with the choosen one*/
 
             /* Initializing the chart to display all values */
             chart_main.ChartAreas[0].AxisX.Maximum = NumberOfSamples;
@@ -79,7 +101,7 @@ namespace NMLS_Graphisch
                 {
                     for (int k = 0; k < windowSize; k++)
                     {
-                        File.AppendAllText("weights.txt",
+                        File.AppendAllText(String.Format("weights_{0}.txt", comboBox_algorithem.SelectedItem.ToString().Replace(" ","")),
                             String.Format("[{0}][{1}] {2}\n", k, i, Math.Round(w[k, i], 2).ToString()),
                             Encoding.UTF8);
                     }
@@ -92,15 +114,15 @@ namespace NMLS_Graphisch
             switch (comboBox_algorithem.SelectedItem.ToString())
             {
 
-                case "lokaler Mittelwert":
+                case "local mean":
                     series = localMean();
                     break;
 
-                case "direkter Vorgänger":
+                case "direct predecessor":
                     series = directPredecessor();
                     break;
 
-                case "differenzieller Vorgänger":
+                case "differential predecessor":
                     series = diffPredecessor();
                     break;
 
@@ -130,7 +152,7 @@ namespace NMLS_Graphisch
                 {
                     for (int k = 0; k < windowSize; k++)
                     {
-                        File.AppendAllText("weights_after.txt",
+                        File.AppendAllText(String.Format("weights_after_{0}.txt", comboBox_algorithem.SelectedItem.ToString().Replace(" ", "")),
                             String.Format("[{0}][{1}] {2}\n", k, i, Math.Round(w[k, i], 2).ToString()),
                             Encoding.UTF8);
                     }
@@ -159,8 +181,8 @@ namespace NMLS_Graphisch
             x_error[0] = 0;
 
             /* Inizilazing series for the main chart */
-            Series localMeanError = new Series("Lokaler Mittelwert Error");
-            Series localMeanPredict = new Series("Lokaler Mittelwert Prediction");
+            Series localMeanError = new Series("Local Mean Error");
+            Series localMeanPredict = new Series("Local Mean Prediction");
             localMeanError.ChartType = SeriesChartType.Spline;
             localMeanPredict.ChartType = SeriesChartType.Spline;
 
@@ -195,11 +217,11 @@ namespace NMLS_Graphisch
 
                 if (checkBox_output.Checked)
                 {
-                    File.AppendAllText("lokalerMittelwert.txt",
+                    File.AppendAllText("localMean.txt",
                    String.Format("{0}. X_pred {1}\n", x_count, x_pred),
                    Encoding.UTF8);
 
-                    File.AppendAllText("lokalerMittelwert.txt",
+                    File.AppendAllText("localMean.txt",
                         String.Format("{0}. X_actual {1}\n", x_count, x_actual),
                         Encoding.UTF8);
                 }
@@ -213,7 +235,7 @@ namespace NMLS_Graphisch
                 /* Output */
                 if (checkBox_output.Checked)
                 {
-                    File.AppendAllText("lokalerMittelwert.txt",
+                    File.AppendAllText("localMean.txt",
                     String.Format("{0}. X_error {1}\n\n", x_count, x_error[x_count]),
                     Encoding.UTF8);
                 }
@@ -260,8 +282,8 @@ namespace NMLS_Graphisch
             /* Output the result */
             if (checkBox_output.Checked)
             {
-                File.AppendAllText("ergebnisse.txt",
-                        String.Format("Quadratische Varianz(x_error): {0}\n Mittelwert(x_error): {1}\n\n", varianz, mittel),
+                File.AppendAllText("results_localMean.txt",
+                        String.Format("Squared variance(x_error): {0}\n Average(x_error): {1}\n\n", varianz, mittel),
                         Encoding.UTF8);
             }
 
@@ -285,8 +307,8 @@ namespace NMLS_Graphisch
             int x_count = 0;
 
             /* Inizilazing series for the main chart */
-            Series directPredecessorError = new Series("Direkter Vorgänger Error");
-            Series directPredecessorPrediction = new Series("Direkter Vorgänger Prediction");
+            Series directPredecessorError = new Series("Direct predecessor Error");
+            Series directPredecessorPrediction = new Series("Direct predecessor Prediction");
             directPredecessorError.ChartType = SeriesChartType.Spline;
             directPredecessorPrediction.ChartType = SeriesChartType.Spline;
 
@@ -311,11 +333,11 @@ namespace NMLS_Graphisch
                     /* If output is checked a file is produced with prediction, actual and the error */
                     if (checkBox_output.Checked)
                     {
-                        File.AppendAllText("direkterVorgaenger.txt",
+                        File.AppendAllText("directpredecessor.txt",
                        String.Format("{0}. X_pred {1}\n", x_count, x_pred),
                        Encoding.UTF8);
 
-                        File.AppendAllText("direkterVorgaenger.txt",
+                        File.AppendAllText("directpredecessor.txt",
                             String.Format("{0}. X_actual {1}\n", x_count, x_actual),
                             Encoding.UTF8);
                     }
@@ -326,7 +348,7 @@ namespace NMLS_Graphisch
                     /* Output */
                     if (checkBox_output.Checked)
                     {
-                        File.AppendAllText("direkterVorgaenger.txt",
+                        File.AppendAllText("directpredecessor.txt",
                         String.Format("{0}. X_error {1}\n\n", x_count, x_error[x_count]),
                         Encoding.UTF8);
                     }
@@ -376,8 +398,8 @@ namespace NMLS_Graphisch
             /* Output the result */
             if (checkBox_output.Checked)
             {
-                File.AppendAllText("ergebnisse.txt",
-                        String.Format("Quadratische Varianz(x_error): {0}\n Mittelwert(x_error): {1}\n\n", varianz, mittel),
+                File.AppendAllText("results_directpredecessor.txt",
+                        String.Format("Squared variance(x_error): {0}\n Average(x_error): {1}\n\n", varianz, mittel),
                         Encoding.UTF8);
             }
 
@@ -401,8 +423,8 @@ namespace NMLS_Graphisch
             int x_count = 0;
 
             /* Inizilazing series for the main chart */
-            Series diffPredecessorError = new Series("Differenzieller Vorgänger Error");
-            Series diffPredecessorPrediction = new Series("Differenzieller Vorgänger Prediction");
+            Series diffPredecessorError = new Series("Differential predecessor Error");
+            Series diffPredecessorPrediction = new Series("Differential predecessor Prediction");
             diffPredecessorError.ChartType = SeriesChartType.Spline;
             diffPredecessorPrediction.ChartType = SeriesChartType.Spline;
 
@@ -427,11 +449,11 @@ namespace NMLS_Graphisch
                     /* If output is checked a file is produced with prediction, actual and the error */
                     if (checkBox_output.Checked)
                     {
-                        File.AppendAllText("differenziellerVorgaenger.txt",
+                        File.AppendAllText("differentialpredecessor .txt",
                        String.Format("{0}. X_pred {1}\n", x_count, x_pred),
                        Encoding.UTF8);
 
-                        File.AppendAllText("differenziellerVorgaenger.txt",
+                        File.AppendAllText("differentialpredecessor.txt",
                             String.Format("{0}. X_actual {1}\n", x_count, x_actual),
                             Encoding.UTF8);
                     }
@@ -442,7 +464,7 @@ namespace NMLS_Graphisch
                     /* Output */
                     if (checkBox_output.Checked)
                     {
-                        File.AppendAllText("differenziellerVorgaenger.txt",
+                        File.AppendAllText("differentialpredecessor.txt",
                         String.Format("{0}. X_error {1}\n\n", x_count, x_error[x_count]),
                         Encoding.UTF8);
                     }
@@ -494,8 +516,8 @@ namespace NMLS_Graphisch
             /* Output the result */
             if (checkBox_output.Checked)
             {
-                File.AppendAllText("ergebnisse.txt",
-                        String.Format("Quadratische Varianz(x_error): {0}\n Mittelwert(x_error): {1}\n\n", varianz, mittel),
+                File.AppendAllText("results_differentialpredecessor.txt",
+                        String.Format("Squared variance(x_error): {0}\n Average(x_error): {1}\n\n", varianz, mittel),
                         Encoding.UTF8);
             }
 
@@ -516,11 +538,14 @@ namespace NMLS_Graphisch
             // sets an eventhandler on the gotFocus event
             txtBox_learnrate.GotFocus += new EventHandler(txtBox_learnrate_gotFocus); 
             txtBox_learnrate.Text = ">0.0 & <=1.0";
+            // sets an eventhandler on the gotFocus event
+            txtBox_windowSize.GotFocus += new EventHandler(txtBox_windowSize_gotFocus);
             chart_main.Series.Clear();
             Series x_actual = new Series("Actual x Value");
             x_actual.ChartType = SeriesChartType.Spline;
 
-
+            // sets the accept button to Start_btn
+            this.AcceptButton = Start_btn;
 
             /*  Initializing weights and actual values
                 In case no picture is loaded, actual values are generated
@@ -547,6 +572,18 @@ namespace NMLS_Graphisch
         protected void txtBox_learnrate_gotFocus(Object sender, EventArgs e)
         {
             txtBox_learnrate.Text = "";
+        }
+
+        /*--------------------------------------------------
+         *  txtBox_windowSize_gotFocus()
+         * 
+         *  sets the default text to "" if gotFocus is raised
+         * 
+         * -------------------------------------------------*/
+
+        protected void txtBox_windowSize_gotFocus(Object sender, EventArgs e)
+        {
+            txtBox_windowSize.Text = "";
         }
 
         /*---------------------------------------------------
@@ -636,6 +673,28 @@ namespace NMLS_Graphisch
                     MessageBox.Show("Konnte Bild nicht laden.");
                     MessageBox.Show(String.Format("{0}", exep.ToString()));
                 }
+            }
+        }
+
+        /*---------------------------------------------------
+        *  txtBox_windowSize_TextChanged()
+        * 
+        *  proofs if window size textbox is a valid number
+        * 
+        *---------------------------------------------------*/
+
+        private void txtBox_windowSize_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if(txtBox_windowSize.Text.Length > 0)
+                {
+                    windowSize = Int32.Parse(txtBox_windowSize.Text);
+                }
+            }catch(Exception excep)
+            {
+                MessageBox.Show("Not a valid window size");
+                txtBox_windowSize.Text = "";
             }
         }
     }
