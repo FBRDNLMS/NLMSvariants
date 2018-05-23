@@ -11,7 +11,6 @@ Created by Stefan Friese on 26.04.2018
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <float.h> // DBL_MAX
 #include "nlms_types.h" // added types
 
 #define RGB_COLOR 255
@@ -193,8 +192,8 @@ Variant (1/3), substract local mean.
 */
 void localMean ( mldata_t *mlData, point_t points[] ) {
 	double *localWeights = (double *) malloc ( sizeof(double) * mlData->windowSize + 1);		
-	memcpy ( localWeights, mlData->weights, mlData->windowSize ); 					// Copy weights so they can be changed locally
-	
+	localWeights = mlData->weights;
+
 	char fileName[50];
 	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount + 1);					// Includes e(n)		
 	memset(xError, 0.0, mlData->samplesCount);							// Initialize xError-array with Zero		
@@ -213,7 +212,7 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 	double xPredicted = 0.0;
 	double xActual = 0.0;
 
-	for ( xCount = 1; xCount < mlData->samplesCount; xCount++ ) { 						// First value will not get predicted
+	for ( xCount = 1; xCount < mlData->samplesCount-1; xCount++ ) { 						// First value will not get predicted
 		unsigned _arrayLength = ( xCount > mlData->windowSize ) ? mlData->windowSize + 1 : xCount;	// Ensures corect length at start
 		xMean = (xCount > 0) ? windowXMean(_arrayLength, xCount) : 0;					
 		xPredicted = 0.0;
@@ -281,9 +280,11 @@ substract direct predecessor
 */
 void directPredecessor( mldata_t *mlData, point_t points[]) {
 	double *localWeights = ( double * ) malloc ( sizeof(double) * mlData->windowSize + 1 );
-	memcpy ( localWeights, mlData->weights, mlData->windowSize );
+	localWeights = mlData->weights;
+
 	char fileName[512];
 	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount + 1 );
+	memset(xError, 0.0, mlData->samplesCount);
 	unsigned xCount = 0, i;
 	double xActual = 0.0;
 	double xPredicted = 0.0;
@@ -295,7 +296,7 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 	mkFileName ( fileName, sizeof(fileName), USED_WEIGHTS_DIR_PRED);
 	FILE *fp9 = fopen(fileName, "w");
 
-	for (xCount = 1; xCount < mlData->samplesCount; xCount++) { // first value will not get predicted
+	for (xCount = 1; xCount < mlData->samplesCount-1; xCount++) { // first value will not get predicted
 		unsigned _arrayLength = ( xCount > mlData->windowSize ) ? mlData->windowSize + 1 : xCount;
 		xPredicted = 0.0;
 		xActual = xSamples[xCount];
@@ -363,9 +364,12 @@ differential predecessor.
 */
 void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	double *localWeights = (double *) malloc ( sizeof(double) * mlData->windowSize + 1 );
-	memcpy( localWeights, mlData->weights, mlData->windowSize );
+	localWeights = mlData->weights;
+
 	char fileName[512];
 	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount + 1);
+	memset(xError, 0.0, mlData->samplesCount);
+
 	unsigned xCount = 0, i;
 	double xPredicted = 0.0;
 	double xActual = 0.0;
@@ -377,7 +381,7 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	mkFileName ( fileName, sizeof(fileName), USED_WEIGHTS_DIFF_PRED);
 	FILE *fp9 = fopen(fileName, "w");
 
-		for (xCount = 1; xCount < mlData->samplesCount; xCount++) { 							// First value will not get predicted
+		for (xCount = 1; xCount < mlData->samplesCount-1; xCount++) { 							// First value will not get predicted
 
 		unsigned _arrayLength = (xCount > mlData->windowSize) ? mlData->windowSize + 1 : xCount;
 		xPredicted = 0.0;
@@ -539,22 +543,22 @@ void bufferLogger(char *buffer, point_t points[]) {
 	unsigned i;
 	char _buffer[512] = ""; // TODO: resize buffer and _buffer so greater sampleval can be choosen
 //	char *_buffer = (char *) malloc ( sizeof(char) * 512 + 1);
-	for (i = 0; i < mlData->samplesCount - 1; i++) { 									// xActual
+	for (i = 1; i < mlData->samplesCount - 1; i++) { 									// xActual
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[0], points[i].yVal[0]);
 		strcat(buffer, _buffer);
 	}
 	strcat(buffer, "\" fill=\"none\" id=\"svg_1\" stroke=\"black\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
-	for (i = 0; i < mlData->samplesCount - 1; i++) {									// xPredicted from localMean
+	for (i = 1; i < mlData->samplesCount - 1; i++) {									// xPredicted from localMean
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[1], points[i].yVal[1]);
 		strcat(buffer, _buffer);
 	}
 	strcat(buffer, "\" fill=\"none\" id=\"svg_2\" stroke=\"green\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
-	for (i = 0; i <= mlData->samplesCount - 1; i++) { 									//xPredicted from directPredecessor
+	for (i = 1; i <= mlData->samplesCount - 1; i++) { 									//xPredicted from directPredecessor
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[2], points[i].yVal[2]);
 		strcat(buffer, _buffer);
 	}
 	strcat(buffer, "\" fill=\"none\" id=\"svg_3\" stroke=\"blue\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");
-	for (i = 0; i < mlData->samplesCount - 1; i++) { 									//xPredicted from diff Pred
+	for (i = 1; i < mlData->samplesCount - 1; i++) { 									//xPredicted from diff Pred
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[3], points[i].yVal[3]);
 		strcat(buffer, _buffer);
 	}
