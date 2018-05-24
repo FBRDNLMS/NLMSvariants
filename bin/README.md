@@ -6,7 +6,8 @@
 
 1. Choose the algorithm u want to calculate on and press "start" or "enter"
 
-2. Choose the number of pixels you want to go for
+2. Choose the number of pixels you want to go for. For more than 20,000 pixels, please use the c .exe, because
+   this version is not optimized for high number of pixels. Only for visualising small amount of pixel results.
 
 3. Clears the screen and reprints the actual values of your picture or predefined values
 
