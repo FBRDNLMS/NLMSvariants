@@ -51,7 +51,7 @@ Parameters can be changed. Please use `$ CPP_NLMS -h` so you can see an overview
 ![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/args.png "ANSI_C/C++ bin, overview of args")
 
 Tested ANSI C version with the biggest picture I could find as input data. `$./lms -i cherry_blossom_3456x2592.ppm -n 8999999`
-You can see the size has been reduced to the max pixel size of the image. Only limiting factor is HDD/SSD size. Logfiles can get quite big in size.
+You can see the size has been reduced to the max pixel size of the image. Only limiting factor is HDD/SSD space. Logfiles can get quite big in size.
 ![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/big_input.png "ANSI_C/C++ bin, overview of args")
 
 Logs are created by default for:
