@@ -1,6 +1,9 @@
 # README
 
-### Short explenation of the c# .exe
++Choose ANSIC/C++ version for high amount of input data.
++Chosse C# Version for a nice and better graphical output.
+
+### Short explanation of the c# .exe
 
 ![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/CS_exe_screenshot_1.PNG "C# .exe with loaded picture")
 
