@@ -64,13 +64,14 @@ int main( int argc, char **argv ) {
 	char *colorChannel = (char *) malloc(sizeof(char)* 32);
 	char *inputfile = (char *)malloc(sizeof(char) * 32);
 	unsigned *seed = NULL;
-	unsigned k, xclude = 0;
+	unsigned k, include = 0;
 	unsigned windowSize = 5;
 	unsigned samplesCount = 512;
 	char *stdcolor = "green", xBuffer[512];
 	colorChannel = stdcolor;
 	unsigned int uint_buffer[1], windowBuffer[1];
 	double learnrate = 0.4;
+	char *istrue = "true";
 	
 	
 	while( (argc > 1) && (argv[1][0] == '-')  ) {	// Parses parameters from stdin
@@ -111,9 +112,14 @@ int main( int argc, char **argv ) {
 					++argv;
 					--argc;
 					break;
-				case 'x':
+				case 'g':
 					sscanf(&argv[1][3], "%s", xBuffer);
-					xclude = 1;	
+					if ( strstr(xBuffer, istrue) ) {
+						include = 1;
+					} else {
+						printf(	"Wrong Argruments: %s\n", argv[1]);
+						usage(argv);
+					}
 					++argv;
 					--argc;
 					break;
@@ -169,7 +175,7 @@ int main( int argc, char **argv ) {
 	directPredecessor ( mlData, points);
 	differentialPredecessor( mlData, points );
 
-	if ( xclude == 0 ) {
+	if ( include == 1 ) {
 		mkSvgGraph(points);							// Graph building
 	
 	}	
@@ -480,8 +486,8 @@ char * fileSuffix ( int id ) {
 				"_localMean.txt",
 				"_testvalues.txt", 
 				"_differential_predecessor.txt",
-				"_weights_used_local_mean",
-				"_weights_used_diff_pred",
+				"_weights_used_local_mean.txt",
+				"_weights_used_diff_pred.txt",
 	};
 	return suffix[id];
 }
