@@ -1,6 +1,6 @@
 # README
 
-+ Choose ANSIC/C++ version for high amount of input data.
++ Choose ANSI C/C++ version for high amount of input data.
 
 + Chosse C# Version for a nice and better graphical output.
 
