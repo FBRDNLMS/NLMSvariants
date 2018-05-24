@@ -24,9 +24,11 @@
 
 ![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/CS_exe_screenshot_2.PNG "C# .exe with loaded picture and calculated")
 
-1. Displays the average error of the calculated algorithm
+1. Displays the average error of the calculated algorithm. The first "window size" (M) pixels are ignored for this
+   calulation, because the not updated weights are causing wrong calculations. You can see it by entering more than
+   20 into the window size.
 
-2. Displays the variance of the error of the calculated algorithm
+2. Displays the variance of the error of the calculated algorithm. Same as average error, first "window size" (M) pixels are ignored.
 
 3. The history of graphs displayed in the chart, it is possible to have graphs of all 3 LMS algorithems in the history.
    There is no way to hide graphs, simply use "Clear" and then calculate again.
