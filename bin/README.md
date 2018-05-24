@@ -32,3 +32,30 @@
 
 3. The history of graphs displayed in the chart, it is possible to have graphs of all 3 LMS algorithems in the history.
    There is no way to hide graphs, simply use "Clear" and then calculate again.
+
+
+### Explanation of the ANSI C/C++ bin
+
+Choose an input file `$ CPP_NLMS -i <inputfile>`
+Any __PPM__ file can be used as input.
+
+![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/CPP_NLMS.png  "ANSI_C/C++ bin with loaded picture")
+
+The Output contains the default parameters for window size, color channel, seed for randomization, randomly generated weights and outcome of the nlms functions.
+Parameters can be changed. Please use `$ CPP_NLMS -h` so you can see an overview of the given parameters.
+
+![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/args.png "ANSI_C/C++ bin, overview of args")
+
+Logs are created by default for:
++ input data (pixels of __PPM__ file)
++ created weigths
++ each nlms function.Predicted value, input value and error value as well as square mean and deviation
++ updated weights for each nlms calculation
+
+`CPP_NLMS -i <inputfile> -g true` prints a graphical overview to `graphResults.html`. The output is an __SVG__ embedded in html.
+
+![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/lms_graphing.png "ANSI_C/C++ bin, generate graphical output ")
+
+
+![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/graphing.png "ANSI_C/C++ bin, graphical output ")
+
