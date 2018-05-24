@@ -45,8 +45,9 @@ Any __PPM__ file can be used as input.
 
 ![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/CPP_NLMS.png  "ANSI_C/C++ bin with loaded picture")
 
-The Output contains the default parameters for window size, color channel, seed for randomization, randomly generated weights and outcome of the nlms functions.
-Parameters can be changed. Please use `$ CPP_NLMS -h` so you can see an overview of the given parameters.
+The Output contains the default parameters for window size, color channel, seed for randomization, randomly generated weights and outcome of the nlms functions. Default parameters can be seen in the following picture.
+Parameters can be changed. They've got a default value, as long as you don't change them.
+Please use `$ CPP_NLMS -h` so you can see an overview of the given parameters.
 
 ![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/args.png "ANSI_C/C++ bin, overview of args")
 
@@ -54,7 +55,7 @@ Tested ANSI C version with the biggest picture I could find as input data. `$./l
 You can see the size has been reduced to the max pixel size of the image. Only limiting factor is HDD/SSD space. Logfiles can get quite big in size.
 ![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/big_input.png "ANSI_C/C++ bin, overview of args")
 
-Logs are created by default for:
+Logs are created by default:
 + input data (pixels of __PPM__ file)
 + created weigths
 + each nlms function.Predicted value, input value and error value as well as square mean and deviation
