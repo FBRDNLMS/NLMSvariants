@@ -1,7 +1,7 @@
 ## Installation
 
 This is a carbon copy of the ANSI C version. Sole purpose of its existence is to be compiled under Visual Studio.
-If you do not use VS, pick the ANSI C version __../src/ansi_c__implementation__.
+If you do not use VS, pick the ANSI C version __../src/ansi_c__implementation__. Both versions are multiplatform.
 
 
 ## Features
