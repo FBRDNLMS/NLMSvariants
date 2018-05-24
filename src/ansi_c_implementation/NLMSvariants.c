@@ -671,12 +671,7 @@ void mkSvgGraph(point_t points[]) {
 	if (input == NULL) {
 		printf("No inputfile at mkSvgGraph()");
 		exit(EXIT_FAILURE);
-	}
-
-	fseek(input, 0, SEEK_END);
-	long fpLength = ftell(input);
-	fseek(input, 0, SEEK_SET);
-	
+	}	
 
 	char buffer[131072] = "";					// Bit dirty
 //	char *buffer = (char *) malloc ( sizeof(char) * ( ( 3 * mlData->samplesCount ) + fpLength + 1 ) );
