@@ -265,7 +265,7 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 	deviation /= xErrorLength;										// Deviation
 	printf("mean:%lf, devitation:%lf\t\tlocal Mean\n", mean, deviation);
 	fprintf(fp4, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);	// Write to logfile
-	free(localWeights);
+//	free(localWeights);
 	free(xErrorPtr);
 	free(xError);
 
@@ -353,7 +353,7 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 	printf("mean:%lf, devitation:%lf\t\tdirect Predecessor\n", mean, deviation);
 	fprintf(fp3, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 	fclose(fp3);
-	free(localWeights);
+//	free(localWeights);
 	free(xErrorPtr);
 	free(xError);
 }
@@ -438,7 +438,7 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	printf("mean:%lf, devitation:%lf\t\tdifferential Predecessor\n", mean, deviation);
 	fprintf(fp6, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 	fclose(fp6);
-	free(localWeights);
+//	free(localWeights);
 	free(xErrorPtr);
 	free(xError);
 
@@ -884,7 +884,7 @@ void usage ( char **argv ) {
 	printf("\t-c <color>\t\tUse this color channel from inputfile.\n");
 	printf("\t-w <digit>\t\tCount of used weights (windowSize).\n");
 	printf("\t-l <digit>\t\tLearnrate, 0 < learnrate < 1.\n");	
-	printf("\t-x true\t\t\tLogfiles only, no graph building.\n\t\t\t\tChoose for intense amount of input data.\n");
+	printf("\t-g true\t\t\tGraph building.\n\t\t\t\tChoose for n < 1200.\n");
 	printf("\t-s <digit>\t\tDigit for random seed generator.\n\t\t\t\tSame Digits produce same random values. Default is srand by time.\n");	
 	printf("\n\n");
 	printf("%s compares prediction methods of least mean square filters.\nBy default it reads ppm file format and return logfiles as well\nas an svg graphs as an output of said least mean square methods.\n\nExample:\n\t%s -i myimage.ppm -w 3 -c green -s 5 -x true\n", &argv[0][0], &argv[0][0]); 
