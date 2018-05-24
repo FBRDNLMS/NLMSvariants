@@ -12,7 +12,6 @@ More information can be found inside the according folders.
 
 # Structure
 ```
-│   Aufgabenstellung.md
 │   README.md
 │
 ├───bin
