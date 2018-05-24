@@ -6,7 +6,7 @@ win: NLMSvariants.c
 	gcc -o lms NLMSvariants.c
 
 gdb: NLMSvariants.c
-	gcc -Wall -Wextra -pedantic -ggdb NLMSvariants.c
+	gcc -Wall -Wextra -pedantic -ggdb NLMSvariants.c -lm 
 
 clean:
 	$(RM) lms
