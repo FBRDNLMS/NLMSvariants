@@ -27,15 +27,15 @@ namespace NMLS_Graphisch
         }
 
 
-        static int NumberOfSamples = 1000;
+        static int NumberOfSamples = 20000;
         const int tracking = 40;
         static Stack<double> x = new Stack<double>();
         static Random rnd = new Random();
+        static int windowSize = 6;
+        static double[,] w = new double[windowSize, NumberOfSamples];
         static double[] _x = new double[NumberOfSamples];
-        static double[,] w = new double[NumberOfSamples, NumberOfSamples];
         static double learnrate = 0.2;
         static double[] pixel_array;
-        static int windowSize = 6;
 
         /*---------------------------------------------------
          *  GO_btn_click()
@@ -67,17 +67,17 @@ namespace NMLS_Graphisch
             {
                 learnrate = Double.Parse(txtBox_learnrate.Text);
             }
-            catch(Exception exep)
+            catch (Exception exep)
             {
                 MessageBox.Show("Please choose a learnrate between >0.0 and <=1.0");
                 return;
             }
-            
-            while(learnrate <= 0.0 || learnrate > 1.0)
+
+            while (learnrate <= 0.0 || learnrate > 1.0)
             {
                 MessageBox.Show("Please choose a learnrate between >0.0 and <=1.0");
                 var myValue = Microsoft.VisualBasic.Interaction.InputBox("Choose a learnrate between >0.0 and <=1.0", "Learnrate", "0,8");
-                if(myValue == "")
+                if (myValue == "")
                 {
                     return;
                 }
@@ -101,7 +101,7 @@ namespace NMLS_Graphisch
                 {
                     for (int k = 0; k < windowSize; k++)
                     {
-                        File.AppendAllText(String.Format("weights_{0}.txt", comboBox_algorithem.SelectedItem.ToString().Replace(" ","")),
+                        File.AppendAllText(String.Format("weights_{0}.txt", comboBox_algorithem.SelectedItem.ToString().Replace(" ", "")),
                             String.Format("[{0}][{1}] {2}\n", k, i, Math.Round(w[k, i], 2).ToString()),
                             Encoding.UTF8);
                     }
@@ -200,8 +200,8 @@ namespace NMLS_Graphisch
                 Array.Copy(_x, _sourceIndex, x_part_Array, 0, _arrayLength);
                 double x_middle = (x_count > 0) ? (x_part_Array.Sum() / _arrayLength) : 0;
 
-
                 double x_pred = 0.0;
+
                 double[] x_array = _x;
                 double x_actual = _x[x_count];
 
@@ -265,9 +265,9 @@ namespace NMLS_Graphisch
             }
 
             /* Calculating the avearage of the error and the variance of the error */
-            double mittel = x_error.Where(d => !double.IsNaN(d)).Sum() / x_error.Length;
+            double mittel = x_error.Where(d => !double.IsNaN(d)).Skip(windowSize).Sum() / x_error.Length;
             double varianz = 0.0;
-            foreach (double x_e in x_error)
+            foreach (double x_e in x_error.Skip(windowSize))
             {
                 if (!double.IsNaN(x_e))
                     varianz += Math.Pow(x_e - mittel, 2);
@@ -381,9 +381,9 @@ namespace NMLS_Graphisch
             }
 
             /* Calculating the avearage of the error and the variance of the error */
-            double mittel = x_error.Where(d => !double.IsNaN(d)).Sum() / x_error.Length;
+            double mittel = x_error.Where(d => !double.IsNaN(d)).Skip(windowSize).Sum() / x_error.Length;
             double varianz = 0.0;
-            foreach (double x_e in x_error)
+            foreach (double x_e in x_error.Skip(windowSize))
             {
                 if (!double.IsNaN(x_e))
                     varianz += Math.Pow(x_e - mittel, 2);
@@ -499,9 +499,9 @@ namespace NMLS_Graphisch
             }
 
             /* Calculating the avearage of the error and the variance of the error */
-            double mittel = x_error.Where(d => !double.IsNaN(d)).Sum() / x_error.Length;
+            double mittel = x_error.Where(d => !double.IsNaN(d)).Skip(windowSize).Sum() / x_error.Length;
             double varianz = 0.0;
-            foreach (double x_e in x_error)
+            foreach (double x_e in x_error.Skip(windowSize))
             {
                 if (!double.IsNaN(x_e))
                     varianz += Math.Pow(x_e - mittel, 2);
@@ -535,7 +535,7 @@ namespace NMLS_Graphisch
             comboBox_algorithem.SelectedIndex = 0;
             comboBox_pixel.SelectedIndex = 0;
             // sets an eventhandler on the gotFocus event
-            txtBox_learnrate.GotFocus += new EventHandler(txtBox_learnrate_gotFocus); 
+            txtBox_learnrate.GotFocus += new EventHandler(txtBox_learnrate_gotFocus);
             txtBox_learnrate.Text = ">0.0 & <=1.0";
             // sets an eventhandler on the gotFocus event
             txtBox_windowSize.GotFocus += new EventHandler(txtBox_windowSize_gotFocus);
@@ -549,9 +549,9 @@ namespace NMLS_Graphisch
             /*  Initializing weights and actual values
                 In case no picture is loaded, actual values are generated
                 Then printing them on a chart */
-            for (int i = 0; i < NumberOfSamples; i++)
+            for (int i = 0; i < NumberOfSamples / 2; i++)
             {
-                _x[i] += ((255.0 / NumberOfSamples) * i);
+                _x[i] += ((255.0 / NumberOfSamples / 2) * i);
                 for (int k = 0; k < windowSize; k++)
                 {
                     w[k, i] = rnd.NextDouble();
@@ -637,19 +637,6 @@ namespace NMLS_Graphisch
                         }
                     }
 
-                    /* If NuberOfSamples is greater then 2147483591 its size is over
-                     * the limit of C# possible indexes in an array, so we have to decrease
-                     * the size of NumberOfSamples */
-
-                    NumberOfSamples = (img.Width * img.Height) / 2;
-
-                    if (NumberOfSamples > 2147483591 / 5)
-                        NumberOfSamples = 2147483591 / 5;
-
-                    /* Add every 10% a number into comboBox_pixel for calculating */
-                    for (int i = 1; i < 11; i++)
-                        comboBox_pixel.Items.Add((int)(NumberOfSamples * 0.1 * i));
-
                     _x = pixel_array;
 
                     /* Recreating the weights with the new size of NumberOfSamples */
@@ -686,11 +673,12 @@ namespace NMLS_Graphisch
         {
             try
             {
-                if(txtBox_windowSize.Text.Length > 0)
+                if (txtBox_windowSize.Text.Length > 0)
                 {
                     windowSize = Int32.Parse(txtBox_windowSize.Text);
                 }
-            }catch(Exception excep)
+            }
+            catch (Exception excep)
             {
                 MessageBox.Show("Not a valid window size");
                 txtBox_windowSize.Text = "";
