@@ -1,8 +1,8 @@
 # README
 
-+Choose ANSIC/C++ version for high amount of input data.
++ Choose ANSIC/C++ version for high amount of input data.
 
-+Chosse C# Version for a nice and better graphical output.
++ Chosse C# Version for a nice and better graphical output.
 
 ### Short explanation of the c# .exe
 
