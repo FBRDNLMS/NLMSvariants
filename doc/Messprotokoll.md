@@ -1,7 +1,7 @@
 # 1. CPP-NLMS-Testreihe
 #### Paramter: 
 				- Input: 500.000 Pixel (-n 500000)
-				- WindowSize: 5 (Standart Value)
+				- WindowSize: 5 (Standard Value)
 				- Lernrate von 0.1 bis 1.0 (increased by 0.1)
 				- -i cathedral.ppm 
 				- random seed generator : 3 (-s 3)
