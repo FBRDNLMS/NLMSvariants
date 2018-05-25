@@ -32,4 +32,4 @@ There are a bunch of options you can predefine but do not have to. The only para
 | -g true   | include graph building. Choose for amount of input data lower than 1200.| none|
 | -s        | Seed randomizing weights. Choose for repoducability. | time(NULL)| 
 
-This code is ANSI aka C89 compatible no POSIX, C99, C11 or GNU libs, because it had to be windows compatible . There are way easier methods like getline() for file parsing or getopt() as an args parser, because of compatibility reasons things have been kept simple.
+This code is ANSI aka C89 compatible. No POSIX, C99, C11 or GNU libs, because it had to be windows compatible . There are way easier methods like getline() for file parsing or getopt() as an args parser, because of compatibility reasons things have been kept simple.
