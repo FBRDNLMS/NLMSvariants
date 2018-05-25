@@ -1,7 +1,6 @@
 # README
 
-+ Choose ANSI C/C++ version for high amount of input data.
-
++ Choose ANSI C/C++ version for high amount of input data (Visual C++ is mandatory on Windows).
 + Chosse C# Version for a nice and better graphical output.
 
 ### Short explanation of the c# .exe
