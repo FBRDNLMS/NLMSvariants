@@ -24,8 +24,8 @@ More information can be found inside the according folders.
 ├───doc
 │       Aufgabenstellung.pdf
 │       Dokumentation.pdf
-│       Zeitplan.pdf
-|       Messprotokoll.md
+│       Messprotokoll.md
+|       Zeitplan.pdf
 │
 │       
 └───src
