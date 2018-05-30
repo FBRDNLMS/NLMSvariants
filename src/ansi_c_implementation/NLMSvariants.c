@@ -36,7 +36,7 @@ char * mkFileName ( char* buffer, 				// Date+suffix as filename
 char *fileSuffix ( int id );					// Filename ending of logs
 char *fileHeader ( int id );					// Header inside the logfiles
 void bufferLogger(char *buffer, point_t points[]);		// Writes points to graph template
-void mkSvgGraph ( point_t points[] );				// Parses graph template and calls bufferLogger()
+void mkSvgGraph ( point_t points[], char *templatePath);				// Parses graph template and calls bufferLogger()
 void weightsLogger ( double *weights, int suffix );		// Writes updated weights to a file
 
 /* *rand seed* */
@@ -54,9 +54,7 @@ void localMean ( mldata_t *mlData,point_t points[] );			// First,
 void directPredecessor ( mldata_t *mlData, point_t points[] );		// Second,
 void differentialPredecessor ( mldata_t *mlData, point_t points[] );	// Third filter implementation
 
-double *popNAN(double *xError); 				// Returns array without NAN values, if any exist 
 double windowXMean(int _arraylength, int xCount);		// Returns mean value of given window
-
 
 
 int main( int argc, char **argv ) {
@@ -71,7 +69,7 @@ int main( int argc, char **argv ) {
 	unsigned int uint_buffer[1], windowBuffer[1];
 	double learnrate = 0.4;
 	char *istrue = "true";
-	
+	char *templatePath = NULL;
 	
 	while( (argc > 1) && (argv[1][0] == '-')  ) {	// Parses parameters from stdin
 			switch( argv[1][1] ) {
@@ -115,7 +113,11 @@ int main( int argc, char **argv ) {
 					sscanf(&argv[1][3], "%s", xBuffer);
 					if ( strstr(xBuffer, istrue) ) {
 						include = 1;
-					} else {
+					} else if ( xBuffer && !strstr(xBuffer, istrue) ) {
+                        templatePath = xBuffer; 
+   
+                        include = 1;
+                    } else {
 						printf(	"Wrong Argruments: %s\n", argv[1]);
 						usage(argv);
 					}
@@ -171,7 +173,7 @@ int main( int argc, char **argv ) {
 	differentialPredecessor( mlData, points );
 
 	if ( include == 1 ) {
-		mkSvgGraph(points);							// Graph building
+		mkSvgGraph(points, templatePath);							// Graph building
 	
 	}	
 
@@ -196,9 +198,9 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 	localWeights = mlData->weights;
 
 	char fileName[50];
-	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount + 1);		// Includes e(n) = x - xPred		
-	memset(xError, 0.0, mlData->samplesCount);							// Initialize xError with zero		
-	unsigned i, xCount = 0; 									// Runtime vars
+	const unsigned xErrorLength = mlData->samplesCount;                                  
+    double xError[xErrorLength];            
+    unsigned i, xCount = 0; 			            						// Runtime vars
 
 	mkFileName(fileName, sizeof(fileName), LOCAL_MEAN);						// Create Logfile and its filename
 	FILE* fp4 = fopen(fileName, "w");								
@@ -247,11 +249,8 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 
 	}
 	fclose(fp9);
-	double *xErrorPtr = popNAN(xError); 									// delete NAN values from xError[]
-	double  xErrorLength = *xErrorPtr; 									// Watch popNAN()!
-  	xErrorPtr[0] = 0.0;
 
-	double mean = sum_array(xErrorPtr, xErrorLength) / xErrorLength;					// Mean 
+	double mean = sum_array(xError, xErrorLength) / xErrorLength;					// Mean 
 	double deviation = 0.0;
 
 	for (i = 1; i < xErrorLength; i++) {									// Mean square
@@ -260,9 +259,6 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 	deviation /= xErrorLength;										// Deviation
 	printf("mean square err: %lf, variance: %lf\t\tlocal Mean\n", mean, deviation);
 	fprintf(fp4, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);	// Write to logfile
-//	free(localWeights);
-	free(xErrorPtr);
-	free(xError);
 	fclose(fp4);
 }
 
@@ -281,9 +277,9 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 	localWeights = mlData->weights;
 
 	char fileName[512];
-	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount + 1 );
-	memset(xError, 0.0, mlData->samplesCount);
-	unsigned xCount = 0, i;
+    const unsigned xErrorLength = mlData->samplesCount;
+    double xError[xErrorLength];
+   	unsigned xCount = 0, i;
 	double xActual = 0.0;
 	double xPredicted = 0.0;
 
@@ -326,11 +322,8 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 		points[xCount].yVal[5] = xError[xCount];
 	}
 	fclose(fp9);
-	double *xErrorPtr = popNAN(xError); 											// delete NAN values from xError[]
-	double  xErrorLength = *xErrorPtr; 											// Watch popNAN()!
-		xErrorPtr[0] = 0.0;												// Stored length in [0] , won't be used anyway. Bit dirty
 
-	double mean = sum_array(xErrorPtr, xErrorLength) / xErrorLength;							// Mean
+	double mean = sum_array(xError, xErrorLength) / xErrorLength;							// Mean
 	double deviation = 0.0;													
 
 
@@ -338,12 +331,9 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 		deviation += pow(xError[i] - mean, 2);										// Mean square
 	}
 	deviation /= xErrorLength;												// Deviation
-	printf("mean square err: %lf, variance: %lf\t\tdirect Predecessor\n", mean, deviation);
+	printf("mean square err: %lf, variance: %lf\t\t\tdirect Predecessor\n", mean, deviation);
 	fprintf(fp3, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 	fclose(fp3);
-//	free(localWeights);
-	free(xErrorPtr);
-	free(xError);
 }
 
 /*
@@ -359,10 +349,9 @@ differential predecessor.
 void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	double *localWeights = (double *) malloc ( sizeof(double) * mlData->windowSize + 1 );
 	localWeights = mlData->weights;
-
+    const unsigned xErrorLength = mlData->samplesCount; 
 	char fileName[512];
-	double *xError = (double *) malloc ( sizeof(double) * mlData->samplesCount + 1);
-	memset(xError, 0.0, mlData->samplesCount);
+    double xError[xErrorLength];
 
 	unsigned xCount = 0, i;
 	double xPredicted = 0.0;
@@ -410,11 +399,8 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 
 	}
 	fclose(fp9);
-	double *xErrorPtr = popNAN(xError); 											// delete NAN values from xError[]
-	double  xErrorLength = *xErrorPtr; 											// Watch popNAN()!
-    	xErrorPtr[0] = 0.0;
 
-	double mean = sum_array(xErrorPtr, xErrorLength) / xErrorLength;
+	double mean = sum_array(xError, xErrorLength) / xErrorLength;
 	double deviation = 0.0;
 
 	
@@ -425,9 +411,6 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	printf("mean square err: %lf, variance: %lf\t\t\tdifferential Predecessor\n", mean, deviation);
 	fprintf(fp6, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 	fclose(fp6);
-//	free(localWeights);
-	free(xErrorPtr);
-	free(xError);
 }
 
 /*
@@ -578,39 +561,6 @@ double sum_array(double x[], int xlength) {
 /*
 ======================================================================================================
 
-popNan
-
-returns new array without NAN values 
-
-======================================================================================================
-*/
-double *popNAN(double *xError) {
-	unsigned i, counter = 1;
-	double tmpLength = 0.0;
-	double *tmp = NULL;
-	double *more_tmp = NULL;
-
-	for ( i = 0; i < mlData->samplesCount - 1; i++ ) {
-		counter ++;
-		more_tmp = (double *) realloc ( tmp, counter*(sizeof(double) ));	// Dynamically sized array, as described in realloc() manual
-			if ( !isnan(xError[i]) ) {
-				tmp = more_tmp;
-				tmp[counter - 1] = xError[i];	
-				tmpLength++;
-			}
-	}
-	counter += 1;
-	more_tmp = (double *) realloc ( tmp, counter * sizeof(double) );
-	tmp = more_tmp;
-	*tmp = tmpLength; 								// Length of array is stored inside tmp[0]. tmp[0] is never used anyways
-				    
-	return tmp;
-
-}
-
-/*
-======================================================================================================
-
 r2
 
 returns a random double value between 0 and 1
@@ -644,14 +594,21 @@ parses template.svg and writes results in said template
 
 ======================================================================================================
 */
-void mkSvgGraph(point_t points[]) {
-	FILE *input = fopen("graphResults_template.html", "r");
-	FILE *target = fopen("graphResults.html", "w");
+void mkSvgGraph(point_t points[], char *templatePath) {
+    FILE* input = NULL;
+    FILE *target = fopen("graphResults.html", "w");
+    if (templatePath){ 
+        printf("\ngraph template src at: %s\n", templatePath);
+        input = fopen(templatePath, "r");
+    } else {
+        input = fopen("graphResults_template.html", "r");
+    }
+	
 	char line[512];
 	char firstGraph[15] = { "<path d=\"M0 0" };			// Position where points will be written after
 
 	if (input == NULL) {
-		printf("No inputfile at mkSvgGraph()");
+		printf("\nNo inputfile at mkSvgGraph()\n");
 		exit(EXIT_FAILURE);
 	}	
 
