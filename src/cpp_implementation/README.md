@@ -1,7 +1,7 @@
 ## Installation
 
 This is a carbon copy of the ANSI C version. Sole purpose of its existence is to be compiled under Visual Studio.
-If you do not use VS, pick the ANSI C version __../src/ansi_c__implementation__. Both versions are multiplatform.
+If you do not use VS, pick the ANSI C version __../src/ansi_c_implementation__. Both versions are multiplatform.
 
 
 ## Features
@@ -28,6 +28,6 @@ There are a bunch of options you can predefine but do not have to. The only para
 | -w        | Size of  M (window).      	    | 5      |
 | -c        | Choose RGB color channel, green has least noise. | green  |
 | -l        | Learnrate of machine learning. | 0.4    |
-| -g true   | include graph building. Choose for amount of input data lower than 1200.| none|
+| -g        | include graph building. Choose for amount of input data lower than 1200. Choose path if template is located in another folder, else use true.| none|
 | -s        | Seed randomizing weights. Choose for repoducability. | time(NULL)| 
 

@@ -29,7 +29,7 @@ There are a bunch of options you can predefine but do not have to. The only para
 | -w        | Size of  M (window).     	    | 5      |
 | -c        | Choose RGB color channel, green has least noise. | green  |
 | -l        | Learnrate of machine learning.| 0.4    |
-| -g true   | include graph building. Choose for amount of input data lower than 1200.| none|
+| -g        | include graph building. Choose for amount of input data lower than 1200. If the template is located in another folder use <path> otherwise use true.| none|
 | -s        | Seed randomizing weights. Choose for repoducability. | time(NULL)| 
 
 This code is ANSI aka C89 compatible. No POSIX, C99, C11 or GNU libs, because it had to be windows compatible . There are way easier methods like getline() for file parsing or getopt() as an args parser, because of compatibility reasons things have been kept simple.

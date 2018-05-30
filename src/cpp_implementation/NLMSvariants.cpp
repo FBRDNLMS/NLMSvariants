@@ -816,7 +816,7 @@ void usage ( char **argv ) {
 	printf("\t-c <color>\t\tUse this color channel from inputfile.\n");
 	printf("\t-w <digit>\t\tCount of used weights (windowSize).\n");
 	printf("\t-l <digit>\t\tLearnrate, 0 < learnrate < 1.\n");	
-	printf("\t-g true\t\t\tGraph building.\n\t\t\t\tChoose for n < 1200.\n");
+	printf("\t-g <path>\t\t\tGraph building. If template is located in another folder use path, otherwise true.\n\t\t\t\tChoose for n < 1200.\n");
 	printf("\t-s <digit>\t\tDigit for random seed generator.\n\t\t\t\tSame Digits produce same random values. Default is srand by time.\n");	
 	printf("\n\n");
 	printf("%s compares prediction methods of least mean square filters.\nBy default it reads ppm file format and return logfiles as well\nas an svg graphs as an output of said least mean square methods.\n\nExample:\n\t%s -i myimage.ppm -w 3 -c green -s 5 -g true\n", &argv[0][0], &argv[0][0]); 
