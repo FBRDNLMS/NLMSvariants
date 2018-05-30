@@ -114,10 +114,9 @@ int main( int argc, char **argv ) {
 					if ( strstr(xBuffer, istrue) ) {
 						include = 1;
 					} else if ( xBuffer && !strstr(xBuffer, istrue) ) {
-                        templatePath = xBuffer; 
-   
-                        include = 1;
-                    } else {
+                        			templatePath = xBuffer; 
+						include = 1;
+                   		 	} else {
 						printf(	"Wrong Argruments: %s\n", argv[1]);
 						usage(argv);
 					}
@@ -173,7 +172,7 @@ int main( int argc, char **argv ) {
 	differentialPredecessor( mlData, points );
 
 	if ( include == 1 ) {
-		mkSvgGraph(points, templatePath);							// Graph building
+		mkSvgGraph(points, templatePath);					// Graph building
 	
 	}	
 
