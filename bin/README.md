@@ -60,7 +60,8 @@ Logs are created by default:
 + each nlms function.Predicted value, input value and error value as well as square mean and deviation
 + updated weights for each nlms calculation
 
-`CPP_NLMS -i <inputfile> -g true` prints a graphical overview to `graphResults.html`. The output is an __SVG__ embedded in html.
+`CPP_NLMS -i <inputfile> -g true` prints a graphical overview to `graphResults.html` using the `graphResults_template.html` in the same directory as the binary.
+`CPP_NLMS -i <inputfile> -g <pathToTemplate>` does the same, only the `graphResults_template.html` is handed from a diffrent path. The output is an __SVG__ embedded in html for both.
 
 ![alt text](https://github.com/FBRDNLMS/NLMSvariants/blob/master/img/lms_graphing.png "ANSI_C/C++ bin, generate graphical output ")
 
