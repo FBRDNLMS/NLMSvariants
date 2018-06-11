@@ -194,7 +194,7 @@ Variant (1/3), substract local mean.
 */
 void localMean ( mldata_t *mlData, point_t points[] ) {
 	double *localWeights = (double *) malloc ( sizeof(double) * mlData->windowSize + 1);		
-	localWeights = mlData->weights;
+	memcpy(localWeights, mlData->weights, sizeof(double) * sizeof(mlData->windowSize) );
 
 	char fileName[50];
 	const unsigned xErrorLength = mlData->samplesCount;                                  
@@ -227,7 +227,7 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 		xError[xCount] = xActual - xPredicted;								// Get error value
 		xSquared = 0.0;
 		for (i = 1; i < _arrayLength; i++) { 								// Get xSquared
-			xSquared += pow(xSamples[xCount - i] - xMean, 2);
+			xSquared += (xSamples[xCount - i] - xMean) * (xSamples[xCount - i] - xMean);
 		}
 		if ( xSquared == 0.0 ) { 									// Otherwise returns Pred: -1.#IND00 in some occassions
 			xSquared = 1.0;
@@ -235,9 +235,9 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 		for ( i = 1; i < _arrayLength; i++ ) { 								// Update weights
 			localWeights[i] = localWeights[i - 1] + mlData->learnrate * xError[xCount]  		// Substract localMean
 				* ( (xSamples[xCount - i] - xMean) / xSquared );
-			fprintf( fp9, "%lf\n", localWeights[i] );
+			fprintf( fp9, "%lf;", localWeights[i] );
 		}
-		
+		fprintf(fp9, "\n");	
 		fprintf(fp4, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);			// Write to logfile
 		
 		points[xCount].xVal[1] = xCount;								// Save points so graph can be build later on
@@ -253,12 +253,14 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 	double deviation = 0.0;
 
 	for (i = 1; i < xErrorLength; i++) {									// Mean square
-		deviation += pow(xError[i] - mean, 2);
+		deviation += (xError[i] - mean) * (xError[i] - mean);
 	}
 	deviation /= xErrorLength;										// Deviation
 	printf("mean square err: %lf, variance: %lf\t\tlocal Mean\n", mean, deviation);
 	fprintf(fp4, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);	// Write to logfile
 	fclose(fp4);
+
+	free(localWeights);
 }
 
 /*
@@ -272,12 +274,12 @@ substract direct predecessor
 ======================================================================================================
 */
 void directPredecessor( mldata_t *mlData, point_t points[]) {
-	double *localWeights = ( double * ) malloc ( sizeof(double) * mlData->windowSize + 1 );
-	localWeights = mlData->weights;
+	double *localWeights = (double * ) malloc ( sizeof(double) * mlData->windowSize + 1 );
+	memcpy(localWeights, mlData->weights, sizeof(double) * sizeof(mlData->windowSize));
 
 	char fileName[512];
-    const unsigned xErrorLength = mlData->samplesCount;
-    double xError[xErrorLength];
+    	const unsigned xErrorLength = mlData->samplesCount;
+   	double xError[xErrorLength];
    	unsigned xCount = 0, i;
 	double xActual = 0.0;
 	double xPredicted = 0.0;
@@ -303,7 +305,8 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 
 		double xSquared = 0.0;
 		for (i = 1; i < _arrayLength; i++) {
-			xSquared += pow(xSamples[xCount - 1] - xSamples[xCount - i - 1], 2); 					// substract direct predecessor
+			xSquared += (xSamples[xCount - 1] - xSamples[xCount - i - 1])
+				* (xSamples[xCount - 1] - xSamples[xCount - i - 1]); 					// substract direct predecessor
 		}
 		if ( xSquared == 0.0 ) { 											// Otherwise returns Pred: -1.#IND00 in some occassions
 			xSquared = 1.0;
@@ -327,12 +330,14 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 
 
 	for (i = 1; i < xErrorLength; i++) {
-		deviation += pow(xError[i] - mean, 2);										// Mean square
+		deviation += (xError[i] - mean) * (xError[i] - mean);										// Mean square
 	}
 	deviation /= xErrorLength;												// Deviation
 	printf("mean square err: %lf, variance: %lf\t\t\tdirect Predecessor\n", mean, deviation);
 	fprintf(fp3, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 	fclose(fp3);
+	
+	free(localWeights);
 }
 
 /*
@@ -347,10 +352,11 @@ differential predecessor.
 */
 void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	double *localWeights = (double *) malloc ( sizeof(double) * mlData->windowSize + 1 );
-	localWeights = mlData->weights;
-    const unsigned xErrorLength = mlData->samplesCount; 
+	memcpy(localWeights, mlData->weights, sizeof(double) * sizeof(mlData->windowSize));
+    	
+	const unsigned xErrorLength = mlData->samplesCount; 
 	char fileName[512];
-    double xError[xErrorLength];
+    	double xError[xErrorLength];
 
 	unsigned xCount = 0, i;
 	double xPredicted = 0.0;
@@ -377,7 +383,8 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 
 		double xSquared = 0.0;
 		for (i = 1; i < _arrayLength; i++) {
-			xSquared += pow(xSamples[xCount - i] - xSamples[xCount - i - 1], 2); 					// Substract direct predecessor
+			xSquared += (xSamples[xCount - i] - xSamples[xCount - i - 1])
+				* (xSamples[xCount - i] - xSamples[xCount - i -1]); 					// Substract direct predecessor
 		}
 		if ( xSquared == 0.0 ) { 											// Otherwise returns Pred: -1.#IND00 in some occassions
 			xSquared = 1.0;
@@ -404,12 +411,14 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 
 	
 	for (i = 1; i < xErrorLength; i++) {											// Mean square
-		deviation += pow(xError[i] - mean, 2);
+		deviation += (xError[i] - mean) * (xError[i] - mean);;
 	}
 	deviation /= xErrorLength;
 	printf("mean square err: %lf, variance: %lf\t\t\tdifferential Predecessor\n", mean, deviation);
 	fprintf(fp6, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 	fclose(fp6);
+
+	free(localWeights);
 }
 
 /*
