@@ -416,7 +416,7 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 		deviation += (xError[i] - mean) * (xError[i] - mean);										// Mean square
 	}
 	deviation /= xErrorLength;												// Deviation
-	printf("mean square err: %lf, variance: %lf\t\t\tdirect Predecessor\n", mean, deviation);
+	printf("mean square err: %lf, variance: %lf\t\tdirect Predecessor\n", mean, deviation);
 	fprintf(fp3, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 	fclose(fp3);
 	
