@@ -114,6 +114,10 @@ namespace NMLS_Graphisch
             switch (comboBox_algorithem.SelectedItem.ToString())
             {
 
+                case "standard NLMS":
+                    series = standardNLMS();
+                    break;
+
                 case "local mean":
                     series = localMean();
                     break;
@@ -161,6 +165,125 @@ namespace NMLS_Graphisch
             }
 
 
+        }
+
+        /*---------------------------------------------------
+         *  standardNLMS()
+         * 
+         *  the algorithem for the standard NLMS
+         *  
+         *  returns a array of Series with the error and prediction for
+         *  displaying in a chart
+         * 
+         *---------------------------------------------------*/
+
+        Series[] standardNLMS()
+        {
+
+            int x_count = 0;
+            double[] x_error = new double[NumberOfSamples];
+            x_error[0] = 0;
+
+            /* Inizilazing series for the main chart */
+            Series standardNLMSError = new Series("Standard NLMS Error");
+            Series standardNLMSPredict = new Series("Standard NLMS Prediction");
+            standardNLMSError.ChartType = SeriesChartType.Spline;
+            standardNLMSPredict.ChartType = SeriesChartType.Spline;
+
+            /* Main while loop for the prediction and learing */
+
+            while (x_count < NumberOfSamples - 1)
+            {
+
+                int _sourceIndex = (x_count > windowSize) ? x_count - windowSize : 0;
+                int _arrayLength = (x_count > windowSize) ? windowSize : x_count;
+
+                double x_pred = 0.0;
+
+                double[] x_array = _x;
+                double x_actual = _x[x_count];
+
+                /* Prediction algorithem */
+
+                for (int i = 1; i < _arrayLength; i++)
+                {
+                    x_pred += (w[i, x_count] * (x_array[x_count - i]));
+                }
+
+                /* If output is checked a file is produced with prediction, actual and the error */
+                if (checkBox_output.Checked)
+                {
+                    File.AppendAllText("standardNLMS.txt",
+                   String.Format("{0}. X_pred {1}\n", x_count, x_pred),
+                   Encoding.UTF8);
+
+                    File.AppendAllText("standardNLMS.txt",
+                        String.Format("{0}. X_actual {1}\n", x_count, x_actual),
+                        Encoding.UTF8);
+                }
+
+                /* Calculating the error */
+                x_error[x_count] = x_actual - x_pred;
+
+
+                double x_square = 0;
+
+                /* Output */
+                if (checkBox_output.Checked)
+                {
+                    File.AppendAllText("standardNLMS.txt",
+                    String.Format("{0}. X_error {1}\n\n", x_count, x_error[x_count]),
+                    Encoding.UTF8);
+                }
+
+                /* Calulating the LMS value */
+                for (int i = 1; i < _arrayLength; i++)
+                {
+                    x_square += Math.Pow(x_array[x_count - i], 2);
+                }
+
+                /* x_square == 0.0, drives to undefined weights therefor we set it to 1 */
+
+                if (x_square == 0.0)
+                    x_square = 1.0;
+
+                /* Learning algorithem */
+                for (int i = 1; i < _arrayLength; i++)
+                {
+                    w[i, x_count + 1] = w[i, x_count] + learnrate * x_error[x_count] * (x_array[x_count - i] / x_square);
+                }
+
+                /* Printing error and prediction on the series */
+
+                standardNLMSError.Points.AddXY(x_count, x_error[x_count]);
+                standardNLMSPredict.Points.AddXY(x_count, x_pred);
+
+                x_count += 1;
+            }
+
+            /* Calculating the avearage of the error and the variance of the error */
+            double mittel = x_error.Where(d => !double.IsNaN(d)).Skip(windowSize).Sum() / x_error.Length;
+            double varianz = 0.0;
+            foreach (double x_e in x_error.Skip(windowSize))
+            {
+                if (!double.IsNaN(x_e))
+                    varianz += Math.Pow(x_e - mittel, 2);
+            }
+            varianz /= x_error.Length;
+
+            /* Displayes both on labels */
+            label3.Text = mittel.ToString();
+            label5.Text = varianz.ToString();
+
+            /* Output the result */
+            if (checkBox_output.Checked)
+            {
+                File.AppendAllText("results_standardNLMS.txt",
+                        String.Format("Squared variance(x_error): {0}\n Average(x_error): {1}\n\n", varianz, mittel),
+                        Encoding.UTF8);
+            }
+
+            return new Series[] { standardNLMSPredict, standardNLMSError };
         }
 
         /*---------------------------------------------------
@@ -253,7 +376,7 @@ namespace NMLS_Graphisch
                 /* Learning algorithem */
                 for (int i = 1; i < _arrayLength; i++)
                 {
-                    w[i, x_count + 1] = w[i, x_count] + learnrate * x_error[x_count] * ((x_array[x_count - i] - x_middle) / x_square);
+                    w[i, x_count+1] = w[i, x_count] + learnrate * x_error[x_count] * ((x_array[x_count - i] - x_middle) / x_square);
                 }
 
                 /* Printing error and prediction on the series */
@@ -626,6 +749,9 @@ namespace NMLS_Graphisch
                     Bitmap img = new Bitmap(openFileDialog.FileName);
                     pixel_array = new double[img.Width * img.Height];
 
+                    Console.WriteLine("imgWidth: {0}", img.Width);
+                    Console.WriteLine("imgHeight: {0}", img.Height);
+
                     for (int i = 1; i < img.Width; i++)
                     {
                         for (int j = 1; j < img.Height; j++)
@@ -636,7 +762,7 @@ namespace NMLS_Graphisch
 
                         }
                     }
-
+                    Console.WriteLine("pixle_array length: {0}", pixel_array.Length);
                     _x = pixel_array;
 
                     /* Recreating the weights with the new size of NumberOfSamples */
