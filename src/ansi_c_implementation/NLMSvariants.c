@@ -53,6 +53,7 @@ double sum_array(double x[], int length);
 void localMean ( mldata_t *mlData,point_t points[] );			// First,
 void directPredecessor ( mldata_t *mlData, point_t points[] );		// Second,
 void differentialPredecessor ( mldata_t *mlData, point_t points[] );	// Third filter implementation
+void standardNLMS ( mldata_t *mlData, point_t points[] );
 
 double windowXMean(int _arraylength, int xCount);		// Returns mean value of given window
 
@@ -168,9 +169,11 @@ int main( int argc, char **argv ) {
 	fclose(fp0);
 
 	localMean ( mlData, points );							// math magic functions
+	
 	directPredecessor ( mlData, points );
 	differentialPredecessor( mlData, points );
-
+	standardNLMS ( mlData, points );
+	
 	if ( include == 1 ) {
 		mkSvgGraph(points, templatePath);					// Graph building
 	
@@ -181,6 +184,85 @@ int main( int argc, char **argv ) {
 	free(points);
 	free(mlData);
 	printf("\nDONE!\n");
+}
+
+
+/*
+======================================================================================================
+
+standardNLMS
+
+basic nullified least mean square implementation
+
+======================================================================================================
+*/
+void standardNLMS( mldata_t *mlData, point_t points[] ) {
+	double *localWeights = (double *) malloc ( sizeof(double) * mlData->windowSize + 1);
+	memcpy(localWeights, mlData->weights, sizeof(double) * mlData->windowSize + 1);
+
+	char fileName[50];
+	const unsigned xErrorLength = mlData->samplesCount;
+	double xError[xErrorLength];
+	unsigned i, xCount = 0;
+
+	mkFileName ( fileName, sizeof(fileName), STANDARD_NLMS);
+	FILE* fp01 = fopen( fileName, "w" );
+	fprintf( fp01, fileHeader(STANDARD_NLMS_HEADER) );
+
+	mkFileName ( fileName, sizeof(fileName), USED_WEIGHTS_STANDARD_NLMS );
+	FILE* fp9 = fopen( fileName, "w" );
+
+	double xMean = xSamples[0];
+	double xSquared = 0.0;
+	double xPredicted = 0.0;
+	double xActual = 0.0;
+
+	for ( xCount = 1; xCount < mlData->samplesCount - 1; xCount++ ) {
+		unsigned _arrayLength = ( xCount > mlData->windowSize ) ?  mlData->windowSize + 1 : xCount;
+		xMean = ( xCount > 0 ) ? windowXMean ( _arrayLength, xCount ) : 0;
+		xPredicted = 0.0;
+		xActual = xSamples[xCount];
+		
+		for ( i = 1; i < _arrayLength; i++ ){
+			xPredicted += localWeights[i - 1] * xSamples[xCount - i];
+		}
+		xError[xCount] = xActual - xPredicted;
+		
+		xSquared = 0.0;
+		for ( i =  1; i < _arrayLength; i++ ) {
+			xSquared += xSamples[xCount - i] * xSamples[xCount - i];
+		}
+		if ( xSquared == 0 ) { 
+			xSquared = 1.0;
+		}
+
+		for ( i = 1;  i < _arrayLength; i++ ) {
+			localWeights[i - 1] = localWeights[i - 1] + mlData->learnrate * xError[xCount]
+				* (xSamples[xCount - i] /xSquared);
+			fprintf ( fp9, "%lf;", localWeights[i - 1] );
+		}
+		fprintf ( fp9, "\n" );
+		fprintf ( fp01, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount] );
+		
+		points[xCount].xVal[7] = xCount;
+		points[xCount].yVal[7] = xPredicted;
+		points[xCount].xVal[8] = xCount;
+		points[xCount].yVal[8] = xError[xCount];
+	}
+	fclose(fp9);
+
+	double mean = sum_array(xError, xErrorLength) / xErrorLength;
+	double deviation = 0.0;
+
+	for ( i = 1; i < xErrorLength; i++ ) {
+		deviation += (xError[i] - mean) * (xError[i] - mean);
+	}
+	deviation /= xErrorLength;
+	printf("mean square err: %lf, variance: %lf\t\tNLMS\n", mean, deviation);
+	fprintf( fp01, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean );
+
+	free(localWeights);
+
 }
 
 /*
@@ -314,9 +396,10 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 		for ( i = 1; i < _arrayLength; i++ ) {										// Update weights
 			localWeights[i - 1] = localWeights[i-1] + mlData->learnrate * xError[xCount] 				
 				* ( (xSamples[xCount - 1] - xSamples[xCount - i - 1]) / xSquared);				
-			fprintf( fp9, "%lf\n", localWeights[i - 1] );
+			fprintf( fp9, "%lf;", localWeights[i - 1] );
 		}
-		
+		fprintf(fp9, "\n");
+
 	        fprintf(fp3, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]);					// Write to logfile
 		points[xCount].xVal[2] = xCount; 										// Fill point_t array for graph building
 		points[xCount].yVal[2] = xPredicted;
@@ -393,9 +476,10 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 		for (i = 1; i < _arrayLength; i++) {
 			localWeights[i - 1] = localWeights[i - 1] + mlData->learnrate * xError[xCount] 
 				* ((xSamples[xCount - i] - xSamples[xCount - i - 1]) / xSquared);
-			fprintf( fp9, "%lf\n", localWeights[i - 1] );
+			fprintf( fp9, "%lf;", localWeights[i - 1] );
 
 		}
+		fprintf(fp9, "\n");
        		fprintf(fp6, "%d\t%f\t%f\t%f\n", xCount, xPredicted, xActual, xError[xCount]); 					// Write to logfile
 		
 		points[xCount].xVal[3] = xCount;
@@ -463,6 +547,8 @@ char * fileSuffix ( int id ) {
 				"_differential_predecessor.txt",
 				"_weights_used_local_mean.txt",
 				"_weights_used_diff_pred.txt",
+				"_standard_least_mean_square.txt",
+				"_weights_used_std_nlms.txt"
 	};
 	return suffix[id];
 }
@@ -479,7 +565,8 @@ Contains and returns header from logfiles
 char * fileHeader ( int id ) {
 	char * header[] = {	"\n=========================== Local Mean ===========================\nNo.\txPredicted\txAcutal\t\txError\n",
 				"\n=========================== Direct Predecessor ===========================\nNo.\txPredicted\txAcutal\t\txError\n",
-				"\n=========================== Differential Predecessor ===========================\nNo.\txPredicted\txAcutal\t\txError\n"
+				"\n=========================== Differential Predecessor ===========================\nNo.\txPredicted\txAcutal\t\txError\n",
+				"\n========================= Nullified Least Mean Square =========================\nNo.\txPredicted\txAcutal\t\txError\n"
 	};
 	return header[id];
 }
@@ -543,6 +630,12 @@ void bufferLogger(char *buffer, point_t points[]) {
 		strcat(buffer, _buffer);
 	}
 	strcat(buffer, "\" fill=\"none\" id=\"svg_4\" stroke=\"red\" stroke-width=\"0.4px\"/>\n");
+	for (i = 1; i < mlData->samplesCount - 1; i++) { 									//xPredicted from diff Pred
+		sprintf(_buffer, "L %f %f\n", points[i].xVal[7], points[i].yVal[7]);
+		strcat(buffer, _buffer);
+	}
+	strcat(buffer, "\" fill=\"none\" id=\"svg_5\" stroke=\"yellow\" stroke-width=\"0.4px\"/>\n");
+	
 }
 
 /*
