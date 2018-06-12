@@ -604,6 +604,8 @@ formats output of mkSvgGraph -- Please open graphResults.html to see the output-
 	[4] = xError from localMean, 
 	[5] = xError from directPredecessor, 
 	[6] = xError from differentialPredecessor
+	[7] = xPredicted from NLMS,
+	[8] = xError from NLMS
 
 ======================================================================================================
 */
@@ -629,12 +631,13 @@ void bufferLogger(char *buffer, point_t points[]) {
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[3], points[i].yVal[3]);
 		strcat(buffer, _buffer);
 	}
-	strcat(buffer, "\" fill=\"none\" id=\"svg_4\" stroke=\"red\" stroke-width=\"0.4px\"/>\n");
+	strcat(buffer, "\" fill=\"none\" id=\"svg_4\" stroke=\"red\" stroke-width=\"0.4px\"/>\n<path d=\"M0 0\n");	
 	for (i = 1; i < mlData->samplesCount - 1; i++) { 									//xPredicted from diff Pred
 		sprintf(_buffer, "L %f %f\n", points[i].xVal[7], points[i].yVal[7]);
 		strcat(buffer, _buffer);
 	}
-	strcat(buffer, "\" fill=\"none\" id=\"svg_5\" stroke=\"yellow\" stroke-width=\"0.4px\"/>\n");
+	strcat(buffer, "\" fill=\"none\" id=\"svg_5\" stroke=\"gray\" stroke-width=\"0.4px\"/>\n");
+
 	
 }
 
