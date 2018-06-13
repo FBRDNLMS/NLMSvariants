@@ -9,8 +9,8 @@ typedef struct {
 
 /* *svg graph building* */
 typedef struct {						// Axis x,y
-	double xVal[7];
-	double yVal[7];
+	double xVal[9];
+	double yVal[9];
 }point_t;
 
 /* *ppm read, copy, write* */
@@ -33,12 +33,15 @@ enum fileSuffix_t{ 						// Used in conjunction with MkFileName()
     TEST_VALUES,
     DIFFERENTIAL_PREDECESSOR,
     USED_WEIGHTS_LOCAL_MEAN,
-    USED_WEIGHTS_DIFF_PRED
+    USED_WEIGHTS_DIFF_PRED,
+    STANDARD_NLMS,
+    USED_WEIGHTS_STANDARD_NLMS
 };
 
 enum fileHeader{						// Used in conjunction with MkFilename()
 	LOCAL_MEAN_HEADER,
 	DIRECT_PREDECESSOR_HEADER,
-	DIFFERENTIAL_PREDECESSOR_HEADER
+	DIFFERENTIAL_PREDECESSOR_HEADER,
+	STANDARD_NLMS_HEADER
 };
 
