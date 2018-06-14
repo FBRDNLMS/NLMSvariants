@@ -25,7 +25,7 @@ Lernrate	|	meanerror	|	variance
 
 ### 2. direct Predecessor
 
-Lernrate	|	meanerror	|	devitation
+Lernrate	|	meanerror	|	variance
 ---	|	---	|	---
 0.1	|	0.024560	|	608.448633
 0.2	|	-0.030306	|	2007.513911
@@ -40,7 +40,7 @@ Lernrate	|	meanerror	|	devitation
 
 ### 3. differential Predecessor
 
-Lernrate	|	meanerror	|	devitation
+Lernrate	|	meanerror	|	variance
 ---	|	---	|	---
 0.1	|	0.046246 |	237.604268
 0.2	|	0.058362 |	838.182243
@@ -56,7 +56,7 @@ Lernrate	|	meanerror	|	devitation
 
 ### 4. NLMS
 
-Lernrate	|	meanerror	|	devitation
+Lernrate	|	meanerror	|	variance
 ---	|	---	|	---
 0.1	|	-0.865235	|	51.897994
 0.2	|	-0.916315 |	67.761425
