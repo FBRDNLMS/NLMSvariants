@@ -202,7 +202,7 @@ void standardNLMS( mldata_t *mlData, point_t points[] ) {
 
 	char fileName[512];
 	const unsigned xErrorLength = mlData->samplesCount;	
-	double *xError = (double *) malloc ( sizeof(double) *mlData->samplesCount);
+	double *xError = (double *) malloc ( sizeof(double) *mlData->samplesCount + 1);
 
 	unsigned i, xCount = 0;
 	mkFileName ( fileName, sizeof(fileName), STANDARD_NLMS);
@@ -280,7 +280,7 @@ void localMean ( mldata_t *mlData, point_t points[] ) {
 
 	char fileName[512];
 	const unsigned xErrorLength = mlData->samplesCount;                                   
-	double *xError = (double *) malloc ( sizeof(double) *mlData->samplesCount);
+	double *xError = (double *) malloc ( sizeof(double) *mlData->samplesCount + 1);
 
     	unsigned i, xCount = 0; 			            						// Runtime vars
 
@@ -363,7 +363,7 @@ void directPredecessor( mldata_t *mlData, point_t points[]) {
 	
 	char fileName[512];
     	const unsigned xErrorLength = mlData->samplesCount;
-	double *xError = (double *) malloc ( sizeof(double) *mlData->samplesCount);
+	double *xError = (double *) malloc ( sizeof(double) *mlData->samplesCount + 1);
    	
 	unsigned xCount = 0, i;
 	double xActual = 0.0;
@@ -443,7 +443,7 @@ void differentialPredecessor ( mldata_t *mlData, point_t points[] ) {
 	memcpy(localWeights, mlData->weights, sizeof(double) * mlData->windowSize + 1);
 	const unsigned xErrorLength = mlData->samplesCount; 
 	char fileName[512]; 
-	double *xError = (double *) malloc ( sizeof(double) *mlData->samplesCount);
+	double *xError = (double *) malloc ( sizeof(double) *mlData->samplesCount + 1);
 
 	unsigned xCount = 0, i;
 	double xPredicted = 0.0;

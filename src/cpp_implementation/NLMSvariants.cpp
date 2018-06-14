@@ -270,6 +270,7 @@ void standardNLMS(mldata_t *mlData, point_t points[]) {
 	fprintf(fp01, "\nQuadratische Varianz(x_error): %f\nMittelwert:(x_error): %f\n\n", deviation, mean);
 
 	free(localWeights);
+	free(xError);
 
 }
 
@@ -354,6 +355,7 @@ void localMean(mldata_t *mlData, point_t points[]) {
 	fclose(fp4);
 
 	free(localWeights);
+	free(xError);
 }
 
 /*
@@ -435,6 +437,7 @@ void directPredecessor(mldata_t *mlData, point_t points[]) {
 	fclose(fp3);
 
 	free(localWeights);
+	free(xError);
 }
 
 /*
@@ -522,6 +525,7 @@ void differentialPredecessor(mldata_t *mlData, point_t points[]) {
 	fclose(fp6);
 
 	free(localWeights);
+	free(xError);
 }
 
 /*
