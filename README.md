@@ -2,13 +2,13 @@
 
 # Objective
 
-The goal of our task was to implement three kinds of a least mean square filter.
+The goal of our task was to implement three four variants of a least mean square filter.
 According to the given task we created implementations in ANSI C, C++ and C#.
-Input of these filters are image files, namely BMP, GIF, EXIF, JPG, PNG and TIFF in C#.
+Input given to these filters are image files, namely BMP, GIF, EXIF, JPG, PNG and TIFF in C#.
 PPM  in ANSI C and C++ _only_.
 In each of these implementations there are log files and graphs as an output.
 
-More information can be found inside the according folders.
+More information can be found in according folders.
 
 # Structure
 ```
